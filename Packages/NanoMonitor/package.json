@@ -1,0 +1,24 @@
+{
+  "name": "com.coffee.nano-monitor",
+  "displayName": "Nano Monitor",
+  "description": "This package displays FPS, memory status and any static properties.\n- extremely fast\n- no allocations (on build)\n-1 set pass call only\n- open/close/refresh (GC) buttons",
+  "version": "1.0.0",
+  "unity": "2018.3",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mob-sakai/MaskTweaksForUGUI.git"
+  },
+  "author": {
+    "name": "mob-sakai",
+    "email": "sakai861104@gmail.com",
+    "url": "https://github.com/mob-sakai"
+  },
+  "dependencies": {
+    "com.unity.ugui": "1.0.0"
+  },
+  "keywords": [
+    "profiler",
+    "analysis"
+  ]
+}

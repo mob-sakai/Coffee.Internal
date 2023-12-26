@@ -1,0 +1,74 @@
+# Required secrets
+#   UNITY_LICENSE: The contents of Unity license file
+name: 🧪 Test
+
+env:
+  minVersion: "2019.4"
+  targetPlatform: StandaloneLinux64
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - develop
+    tags:
+      - "!*"
+    paths-ignore:
+      - "*.md"
+  pull_request:
+    types:
+      - opened
+      - synchronize
+
+jobs:
+  setup:
+    name: ⚙️ Setup
+    runs-on: ubuntu-latest
+    outputs:
+      unityVersions: ${{ steps.setup.outputs.unityVersions }}
+    steps:
+      - name: ⚙️ Find target Unity versions
+        id: setup
+        run: |
+          UNITY_VERSIONS=`npx unity-changeset list --versions --latest-patch --min ${{ env.minVersion }} --json`
+          echo "==== Target Unity Versions ===="
+          echo "${UNITY_VERSIONS}"
+          echo "unityVersions=${UNITY_VERSIONS}" >> $GITHUB_OUTPUT
+
+  test:
+    name: 🧪 Run tests
+    runs-on: ubuntu-latest
+    permissions:
+      checks: write
+      contents: read
+    needs: setup
+    strategy:
+      fail-fast: false
+      matrix:
+        unityVersion: ${{ fromJson(needs.setup.outputs.unityVersions) }}
+    steps:
+      - name: 🚚 Checkout
+        uses: actions/checkout@v4
+
+      - name: 📥 Cache library
+        uses: actions/cache@v3
+        with:
+          path: Library
+          key: Library-${{ matrix.unityVersion }}-${{ env.targetPlatform }}-${{ github.sha }}
+          restore-keys: |
+            Library-${{ matrix.unityVersion }}-${{ env.targetPlatform }}-
+            Library-${{ matrix.unityVersion }}-
+            Library-
+
+      - name: 🧪 Run tests
+        uses: game-ci/unity-test-runner@v3
+        timeout-minutes: 30
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+        with:
+          customImage: mobsakai/unity3d:${{ matrix.unityVersion }}
+          # unityVersion: ${{ matrix.unityVersion }}
+          customParameters: -nographics
+          checkName: ${{ matrix.unityVersion }} Test Results
+          githubToken: ${{ github.token }}
+          coverageOptions: "dontClear;generateHtmlReport;generateBadgeReport;pathFilters:+**/Packages/src/**;assemblyFilters:+<packages>,-*.Editor,-*.Test"

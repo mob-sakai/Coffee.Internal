@@ -1,0 +1,50 @@
+{
+  "metadata": [
+    {
+      "dest": "src/api",
+      "memberLayout": "separatePages",
+      "allowCompilationErrors": true,
+      "filter": "filterConfig.yml",
+      "src": [
+        {
+          "src": "..",
+          "files": [
+            "Coffee.SoftMaskForUGUI.csproj"
+          ]
+        }
+      ]
+    }
+  ],
+  "build": {
+    "dest": "_site",
+    "globalMetadata": {
+      "_appFaviconPath": "resources/favicon.ico",
+      "_appLogoPath": "resources/logo.png",
+      "_enableSearch": "true",
+      "_gitUrlPattern": "github"
+    },
+    "content": [
+      {
+        "src": "src",
+        "files": [
+          "**"
+        ]
+      }
+    ],
+    "resource": [
+      "metadata.json",
+      "resources/**/*"
+    ],
+    "template": [
+      "default",
+      "custom"
+    ],
+    "xref": [
+      "https://docs.unity3d.com/Packages/com.unity.ugui@1.0/xrefmap.yml",
+      "https://normanderwan.github.io/UnityXrefMaps/xrefmap.yml"
+    ],
+    "xrefService": [
+      "https://xref.docs.microsoft.com/query?uid={uid}"
+    ]
+  }
+}

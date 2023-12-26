@@ -1,0 +1,72 @@
+# Required secrets
+#   UNITY_LICENSE: The contents of Unity license file
+name: 🎮 Build Demo Player
+
+env:
+  unityVersion: 2022.3.10f1
+  targetPlatform: WebGL
+
+on:
+  workflow_call:
+    secrets:
+      UNITY_LICENSE:
+        description: The contents of Unity license file
+        required: true
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: 🎮 Build Demo Player
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: 🚚 Checkout
+        uses: actions/checkout@v4
+
+      - name: 📥 Find External Demo Player
+        id: find
+        run: |
+          demo=`jq -r '.demo' ./Documentation/metadata.json`
+          if [ "${demo}" == "null" ]; then
+            echo "cached=false" | tee -a $GITHUB_OUTPUT $GITHUB_STEP_SUMMARY
+            echo "demo=${demo}" | tee -a $GITHUB_OUTPUT $GITHUB_STEP_SUMMARY
+            exit 0
+          fi
+
+          mkdir -p build/WebGL/WebGL
+          curl -L "${demo}" -o demo.zip
+          unzip demo.zip -d build/WebGL/WebGL
+          echo "cached=true" | tee -a $GITHUB_OUTPUT $GITHUB_STEP_SUMMARY
+          echo "demo=${demo}" | tee -a $GITHUB_OUTPUT $GITHUB_STEP_SUMMARY
+
+          echo "======="
+          ls build/WebGL/WebGL
+
+      - name: 📥 Cache Library
+        if: steps.find.outputs.cached == 'false'
+        uses: actions/cache@v3
+        with:
+          path: Library
+          key: Library-${{ env.unityVersion }}-${{ env.targetPlatform }}-${{ github.sha }}
+          restore-keys: |
+            Library-${{ env.unityVersion }}-${{ env.targetPlatform }}-
+            Library-${{ env.unityVersion }}-
+            Library-
+
+      - name: 🛠️ Build Demo Player
+        if: steps.find.outputs.cached == 'false'
+        uses: game-ci/unity-builder@v3
+        timeout-minutes: 30
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+        with:
+          unityVersion: ${{ env.unityVersion }}
+          targetPlatform: WebGL
+          allowDirtyBuild: true
+
+      - name: 📦 Upload Demo Player
+        uses: actions/upload-artifact@v3
+        with:
+          name: Demo
+          path: build/WebGL/WebGL

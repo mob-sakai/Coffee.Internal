@@ -1,0 +1,17 @@
+html,
+body {
+    font-family: 'Roboto', sans-serif;
+}
+
+.navbar-brand > img {
+    height: fit-content;
+}
+
+.toc a,
+a.xref {
+    font-weight: 500;
+}
+
+.container {
+    width: 95%;
+}

@@ -1,0 +1,67 @@
+name: 📷 Snapshot
+
+on:
+  workflow_dispatch:
+    inputs:
+      from:
+        required: true
+      to:
+        required: true
+      path:
+        required: true
+      message:
+        required: true
+      tag:
+        required: true
+  workflow_call:
+    inputs:
+      from:
+        required: true
+        type: string
+      to:
+        required: true
+        type: string
+      path:
+        required: true
+        type: string
+      message:
+        required: true
+        type: string
+      tag:
+        required: true
+        type: string
+
+jobs:
+  merge:
+    name: 📷 Snapshot
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: 🚚 Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.from }}
+          path: from
+
+      - name: 🚚 Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.to }}
+          path: to
+
+      - name: 📷 Take Snapshot '${{ inputs.path }}' from '${{ inputs.from }}' to '${{ inputs.to }}'
+        working-directory: to
+        shell: bash -xe {0}
+        run: |
+          git rm -rf --ignore-unmatch .
+          cp -RT ../from/${{ inputs.path }} .
+
+          git config --local user.email "semantic-release-bot@martynus.net"
+          git config --local user.name "semantic-release-bot"
+
+          git add -A
+          git commit -m "${{ inputs.message }}"
+          git tag ${{ inputs.tag }}
+          git push origin ${{ inputs.to }}
+          git push origin ${{ inputs.tag }}

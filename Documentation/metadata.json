@@ -1,0 +1,22 @@
+{
+  "demo": "https://github.com/mob-sakai/playground/files/13632409/demo.zip",
+  "metadataUrl": "https://mob-sakai.github.io/SoftMaskForUGUI/metadata.json",
+  "versions": [
+    {
+      "ref": "sandbox_v1.0.2",
+      "version": "2.0.0",
+      "unity": "2019.4",
+      "dest": "_site",
+      "appTitle": "UI Soft Mask 2.0.0",
+      "url": "https://mob-sakai.github.io/SoftMaskForUGUI"
+    },
+    {
+      "ref": "sandbox_v1.0.2",
+      "version": "1.0.2",
+      "unity": "2019.4",
+      "dest": "_site/1.0.2",
+      "appTitle": "UI Soft Mask 1.0.2",
+      "url": "https://mob-sakai.github.io/SoftMaskForUGUI/1.0.2"
+    }
+  ]
+}
