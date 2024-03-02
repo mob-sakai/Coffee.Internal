@@ -1,7 +1,13 @@
+using System;
+using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.Profiling;
+using UnityEngine.U2D;
 using UnityEngine.UI;
+#if UNITY_EDITOR
+using System.Reflection;
+#endif
 
 namespace Coffee.Internal
 {
@@ -12,6 +18,77 @@ namespace Coffee.Internal
     {
         private static readonly Vector3[] s_WorldCorners = new Vector3[4];
         private static readonly Bounds s_ScreenBounds = new Bounds(new Vector3(0.5f, 0.5f, 0.5f), new Vector3(1, 1, 1));
+
+#if UNITY_EDITOR
+        private static readonly Type s_SpriteEditorExtensionType =
+            Type.GetType("UnityEditor.Experimental.U2D.SpriteEditorExtension, UnityEditor")
+            ?? Type.GetType("UnityEditor.U2D.SpriteEditorExtension, UnityEditor");
+
+        private static readonly MethodInfo s_GetActiveAtlasTextureMethod = s_SpriteEditorExtensionType
+            .GetMethod("GetActiveAtlasTexture", BindingFlags.Static | BindingFlags.NonPublic);
+
+        private static readonly MethodInfo s_GetActiveAtlasMethod = s_SpriteEditorExtensionType
+            .GetMethod("GetActiveAtlas", BindingFlags.Static | BindingFlags.NonPublic);
+
+        /// <summary>
+        /// Get the actual texture of a sprite in play mode or edit mode.
+        /// </summary>
+        public static Texture2D GetActualTexture(this Sprite self)
+        {
+            if (!self) return null;
+
+            if (Application.isPlaying) return self.texture;
+
+            var ret = s_GetActiveAtlasTextureMethod.Invoke(null, new object[] { self }) as Texture2D;
+            return ret ? ret : self.texture;
+        }
+
+        /// <summary>
+        /// Get the active sprite atlas of a sprite in play mode or edit mode.
+        /// </summary>
+        public static SpriteAtlas GetActiveAtlas(this Sprite self)
+        {
+            if (!self) return null;
+
+            return s_GetActiveAtlasMethod.Invoke(null, new object[] { self }) as SpriteAtlas;
+        }
+#else
+        /// <summary>
+        /// Get the actual texture of a sprite in play mode.
+        /// </summary>
+        internal static Texture2D GetActualTexture(this Sprite self)
+        {
+            return self ? self.texture : null;
+        }
+#endif
+
+        /// <summary>
+        /// Check if a Graphic component is currently in the screen view.
+        /// </summary>
+        public static void GetMaterialsForRendering(this Graphic self, List<Material> result)
+        {
+            result.Clear();
+            if (!self) return;
+
+            var cr = self.canvasRenderer;
+            var count = cr.materialCount;
+            var popCount = cr.popMaterialCount;
+
+            if (result.Capacity < count + popCount)
+            {
+                result.Capacity = count + popCount;
+            }
+
+            for (var i = 0; i < count; i++)
+            {
+                result.Add(cr.GetMaterial(i));
+            }
+
+            for (var i = 0; i < popCount; i++)
+            {
+                result.Add(cr.GetPopMaterial(i));
+            }
+        }
 
         /// <summary>
         /// Check if a Graphic component is currently in the screen view.
