@@ -110,12 +110,6 @@ namespace Coffee.NanoMonitor
             }
         }
 
-        public override bool raycastTarget
-        {
-            get => m_Mode == Mode.Fill;
-            set { }
-        }
-
         public override float preferredWidth
         {
             get
@@ -149,7 +143,8 @@ namespace Coffee.NanoMonitor
             RegisterDirtyVerticesCallback(_checkTextLengthChanged);
 
             base.OnEnable();
-            raycastTarget = false;
+            raycastTarget = m_Mode == Mode.Fill;
+
             maskable = false;
             _sb.Length = 0;
             _sb.Append(m_Text);
@@ -180,6 +175,8 @@ namespace Coffee.NanoMonitor
                 _sb.Append(m_Text);
                 SetVerticesDirty();
             }
+
+            raycastTarget = m_Mode == Mode.Fill;
         }
 #endif
 

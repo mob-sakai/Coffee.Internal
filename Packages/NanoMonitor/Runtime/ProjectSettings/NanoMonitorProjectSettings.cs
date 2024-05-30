@@ -135,6 +135,7 @@ namespace Coffee.NanoMonitor
             FileUtil.CopyFileOrDirectory("Packages/com.coffee.nano-monitor/Prefabs~/NanoMonitor.prefab", assetPath);
             AssetDatabase.ImportAsset(assetPath);
             m_Prefab = AssetDatabase.LoadAssetAtPath<GameObject>(assetPath);
+            EditorUtility.SetDirty(this);
         }
 
         private static string GetBootSceneName()
