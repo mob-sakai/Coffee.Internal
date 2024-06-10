@@ -10,8 +10,7 @@ namespace Coffee.Internal
     /// </summary>
     internal static class RenderTextureRepository
     {
-        private static readonly ObjectRepository<RenderTexture> s_Repository =
-            new ObjectRepository<RenderTexture>(RenderTexture.ReleaseTemporary);
+        private static readonly ObjectRepository<RenderTexture> s_Repository = new ObjectRepository<RenderTexture>();
 
         private static readonly GraphicsFormat s_GraphicsFormat = GraphicsFormatUtility.GetGraphicsFormat(
             RenderTextureFormat.ARGB32,
@@ -65,13 +64,16 @@ namespace Coffee.Internal
                 preferSize.x,
                 preferSize.y,
                 s_GraphicsFormat,
-                useStencil ? 24 : 0);
-            rtd.sRGB = QualitySettings.activeColorSpace == ColorSpace.Linear;
-            rtd.mipCount = -1;
+                useStencil ? 24 : 0)
+            {
+                sRGB = QualitySettings.activeColorSpace == ColorSpace.Linear,
+                mipCount = -1,
 #if UNITY_2021_3_OR_NEWER
-            rtd.depthStencilFormat = useStencil ? s_StencilFormat : GraphicsFormat.None;
+                depthStencilFormat = useStencil ? s_StencilFormat : GraphicsFormat.None
 #endif
-            s_Repository.Get(hash, ref buffer, x => RenderTexture.GetTemporary(x), rtd);
+            };
+
+            s_Repository.Get(hash, ref buffer, x => new RenderTexture(x), rtd);
             Profiler.EndSample();
             return buffer;
         }
