@@ -48,6 +48,9 @@ namespace Coffee.NanoMonitor
         [SerializeField]
         private Image.OriginVertical m_Anchor = Image.OriginVertical.Top;
 
+        [SerializeField]
+        [Range(600, 1920)]
+        private int m_Width = 600;
 
         [HideInInspector]
         [SerializeField]
@@ -72,13 +75,16 @@ namespace Coffee.NanoMonitor
             }
 #endif
 
+            instance.InstantiateOnLoad();
+        }
+
+        private void InstantiateOnLoad()
+        {
             if (!instance.m_Prefab) return;
 
             var go = Instantiate(instance.m_Prefab);
+            go.GetComponent<NanoMonitor>().SetUp(m_Anchor, m_Opened, m_Interval, m_CustomMonitorItems, m_Width);
             DontDestroyOnLoad(go);
-
-            var monitor = go.GetComponent<NanoMonitor>();
-            monitor.SetUp(instance.m_Anchor, instance.m_Opened, instance.m_Interval, instance.m_CustomMonitorItems);
         }
 
         private bool IsValid(string bootSceneName, bool development, out string invalidReason)

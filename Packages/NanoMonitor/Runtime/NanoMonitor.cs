@@ -49,6 +49,10 @@ namespace Coffee.NanoMonitor
         [SerializeField]
         private Image.OriginVertical m_Anchor = default;
 
+        [SerializeField]
+        [Range(600, 1920)]
+        private int m_Width = 600;
+
         [Header("Controls")]
         [SerializeField]
         private GameObject m_FoldoutObject = default;
@@ -102,6 +106,12 @@ namespace Coffee.NanoMonitor
             if (m_OpenButton && m_OpenButton.transform is RectTransform rtButton)
             {
                 rtButton.anchorMin = rtButton.anchorMax = rtButton.pivot = top ? Vector2.up : Vector2.zero;
+            }
+
+            var cs = GetComponentInParent<CanvasScaler>();
+            if (cs)
+            {
+                cs.referenceResolution = new Vector2(m_Width, 1080);
             }
 
             if (m_CustomUITemplate)
@@ -283,12 +293,18 @@ namespace Coffee.NanoMonitor
             Profiler.EndSample();
         }
 
-        public void SetUp(Image.OriginVertical anchor, bool opened, float interval, CustomMonitorItem[] customs)
+        public void SetUp(
+            Image.OriginVertical anchor,
+            bool opened,
+            float interval,
+            CustomMonitorItem[] customs,
+            int width)
         {
             m_Anchor = anchor;
             m_Opened = opened;
             m_Interval = interval;
             m_CustomMonitorItems = customs;
+            m_Width = width;
         }
     }
 }
