@@ -8,13 +8,13 @@ namespace Coffee.Development
         private const string k_EnableSymbol = "ENABLE_COFFEE_LOGGER";
         private const string k_EnableLoggingText = "Development/" + k_EnableSymbol;
 
-        [MenuItem(k_EnableLoggingText, false)]
+        [MenuItem(k_EnableLoggingText, false, 20)]
         private static void EnableLogging()
         {
             SwitchSymbol(k_EnableSymbol);
         }
 
-        [MenuItem(k_EnableLoggingText, true)]
+        [MenuItem(k_EnableLoggingText, true, 20)]
         private static bool EnableLogging_Valid()
         {
             Menu.SetChecked(k_EnableLoggingText, HasSymbol(k_EnableSymbol));

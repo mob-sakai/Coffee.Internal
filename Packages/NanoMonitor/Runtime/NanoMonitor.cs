@@ -1,117 +1,90 @@
 using System;
 using UnityEngine;
 using UnityEngine.Profiling;
+using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 #if UNITY_EDITOR
-using UnityEditor;
-using UnityEditorInternal;
 #endif
 
 namespace Coffee.NanoMonitor
 {
-#if UNITY_EDITOR
-    [CustomEditor(typeof(NanoMonitor))]
-    internal class NanoMonitorEditor : Editor
-    {
-        private ReorderableList _monitorItemList;
-
-        private void OnEnable()
-        {
-            var items = serializedObject.FindProperty("m_CustomMonitorItems");
-            _monitorItemList = CustomMonitorItemDrawer.CreateReorderableList(items);
-        }
-
-        public override void OnInspectorGUI()
-        {
-            base.OnInspectorGUI();
-
-            _monitorItemList.DoLayoutList();
-            serializedObject.ApplyModifiedProperties();
-        }
-    }
-#endif
-
-
     [DisallowMultipleComponent]
     public sealed class NanoMonitor : MonoBehaviour
     {
-        [Header("Settings")]
         [SerializeField]
-        private bool m_Opened = default;
+        private RectTransform m_Layout;
 
         [SerializeField]
-        [Range(0.01f, 2f)]
-        private float m_Interval = 1f;
+        private GameObject m_OpenedObject;
 
         [SerializeField]
-        private Font m_Font = default;
+        private GameObject m_ClosedObject;
 
         [SerializeField]
-        private Image.OriginVertical m_Anchor = default;
+        private Button m_OpenButton;
 
         [SerializeField]
-        [Range(600, 1920)]
-        private int m_Width = 600;
-
-        [Header("Controls")]
-        [SerializeField]
-        private GameObject m_FoldoutObject = default;
+        private Button m_CloseButton;
 
         [SerializeField]
-        private Button m_OpenButton = default;
+        private Button m_PrevButton;
 
         [SerializeField]
-        private Button m_CloseButton = default;
+        private Button m_NextButton;
 
         [Header("View")]
         [SerializeField]
-        private MonitorUI m_Time = default;
+        private MonitorUI m_Time;
 
         [SerializeField]
-        private MonitorUI m_Fps = default;
+        private MonitorUI m_Fps;
 
         [SerializeField]
-        private MonitorUI m_Gc = default;
+        private MonitorUI m_Gc;
 
         [SerializeField]
-        private MonitorUI m_MonoUsage = default;
+        private MonitorUI m_MonoUsage;
 
         [SerializeField]
-        private MonitorUI m_UnityUsage = default;
+        private MonitorUI m_UnityUsage;
 
-        [Header("Custom")]
         [SerializeField]
-        private MonitorUI m_CustomUITemplate = default;
+        private MonitorUI m_CustomUITemplate;
 
-        [HideInInspector]
-        [SerializeField]
-        private CustomMonitorItem[] m_CustomMonitorItems = new CustomMonitorItem[0];
+        private Image.OriginVertical _anchor;
+        private CustomMonitorItem[] _customMonitorItems = new CustomMonitorItem[0];
 
         private double _elapsed;
         private double _fpsElapsed;
         private int _frames;
+        private float _interval = 1f;
+        private bool _isOpened = true;
+        private MonitorUI _switchText;
+        private int _width = 600;
+
+        public static float gpuMemory => (Profiler.GetAllocatedMemoryForGraphicsDriver() >> 10) / 1024f;
+        public static float unityUsed => (Profiler.GetTotalAllocatedMemoryLong() >> 10) / 1024f;
+        public static float unityTotal => (Profiler.GetTotalReservedMemoryLong() >> 10) / 1024f;
+        public static float monoUsed => (Profiler.GetMonoUsedSizeLong() >> 10) / 1024f;
+        public static float monoTotal => (Profiler.GetMonoHeapSizeLong() >> 10) / 1024f;
+        public int fps => (int)(_frames / _fpsElapsed);
 
         private void Start()
         {
             Profiler.BeginSample("(NM)[NanoMonitor] Start");
 
-            var top = m_Anchor == Image.OriginVertical.Top;
-            if (m_FoldoutObject && m_FoldoutObject.transform is RectTransform rtFoldout)
+            var top = _anchor == Image.OriginVertical.Top;
+            if (m_Layout)
             {
-                rtFoldout.anchorMin = top ? new Vector2(0, 1) : new Vector2(0, 0);
-                rtFoldout.anchorMax = top ? new Vector2(1, 1) : new Vector2(1, 0);
-                rtFoldout.pivot = top ? new Vector2(0.5f, 1) : new Vector2(0.5f, 0);
+                m_Layout.anchorMin = top ? new Vector2(0, 1) : new Vector2(0, 0);
+                m_Layout.anchorMax = top ? new Vector2(1, 1) : new Vector2(1, 0);
+                m_Layout.pivot = top ? new Vector2(0.5f, 1) : new Vector2(0.5f, 0);
             }
 
-            if (m_OpenButton && m_OpenButton.transform is RectTransform rtButton)
+            if (TryGetComponent<CanvasScaler>(out var cs))
             {
-                rtButton.anchorMin = rtButton.anchorMax = rtButton.pivot = top ? Vector2.up : Vector2.zero;
-            }
-
-            var cs = GetComponentInParent<CanvasScaler>();
-            if (cs)
-            {
-                cs.referenceResolution = new Vector2(m_Width, 1080);
+                cs.referenceResolution = new Vector2(_width, 1080);
+                cs.matchWidthOrHeight = 0;
             }
 
             if (m_CustomUITemplate)
@@ -119,13 +92,30 @@ namespace Coffee.NanoMonitor
                 m_CustomUITemplate.gameObject.SetActive(false);
 
                 var parent = m_CustomUITemplate.transform.parent;
-                foreach (var item in m_CustomMonitorItems)
+                foreach (var item in _customMonitorItems)
                 {
                     item.ui = Instantiate(m_CustomUITemplate, parent);
                     item.ui.name = "CustomMonitorUI";
                     item.ui.gameObject.SetActive(true);
                 }
             }
+
+            m_CloseButton.transform.localScale =
+                m_OpenButton.transform.localScale =
+                    top ? Vector3.one : new Vector3(1, -1, 1);
+
+            var canMove = 1 < SceneManager.sceneCountInBuildSettings;
+            if (m_PrevButton)
+            {
+                m_PrevButton.gameObject.SetActive(canMove);
+            }
+
+            if (m_NextButton)
+            {
+                m_NextButton.gameObject.SetActive(canMove);
+            }
+
+            SetVisibleOpenObject(_isOpened);
 
             Profiler.EndSample();
         }
@@ -135,7 +125,7 @@ namespace Coffee.NanoMonitor
             _frames++;
             _elapsed += Time.unscaledDeltaTime;
             _fpsElapsed += Time.unscaledDeltaTime;
-            if (_elapsed < m_Interval) return;
+            if (_elapsed < _interval) return;
 
             Profiler.BeginSample("(NM)[NanoMonitor] Update");
 
@@ -146,7 +136,7 @@ namespace Coffee.NanoMonitor
 
             if (m_Fps)
             {
-                m_Fps.SetText("FPS:{0,3}", (int)(_frames / _fpsElapsed));
+                m_Fps.SetText("FPS:{0,3}", fps);
             }
 
             if (m_Gc)
@@ -156,155 +146,63 @@ namespace Coffee.NanoMonitor
 
             if (m_MonoUsage)
             {
-                var monoUsed = (Profiler.GetMonoUsedSizeLong() >> 10) / 1024f;
-                var monoTotal = (Profiler.GetMonoHeapSizeLong() >> 10) / 1024f;
                 m_MonoUsage.SetText("Mono:{0,7:N3}/{1,7:N3}MB", monoUsed, monoTotal);
             }
 
             if (m_UnityUsage)
             {
-                var unityUsed = (Profiler.GetTotalAllocatedMemoryLong() >> 10) / 1024f;
-                var unityTotal = (Profiler.GetTotalReservedMemoryLong() >> 10) / 1024f;
                 m_UnityUsage.SetText("Unity:{0,7:N3}/{1,7:N3}MB", unityUsed, unityTotal);
             }
 
-            foreach (var item in m_CustomMonitorItems)
+            foreach (var item in _customMonitorItems)
             {
                 item.UpdateText();
             }
 
             _frames = 0;
-            _elapsed %= m_Interval;
+            _elapsed %= _interval;
             _fpsElapsed = 0;
             Profiler.EndSample();
         }
 
-        private void OnEnable()
-        {
-            Profiler.BeginSample("(NM)[NanoMonitor] OnEnable");
 
-            if (m_OpenButton)
-            {
-                m_OpenButton.onClick.AddListener(Open);
-            }
-
-            if (m_CloseButton)
-            {
-                m_CloseButton.onClick.AddListener(Close);
-            }
-
-            if (m_Opened)
-            {
-                Open();
-            }
-            else
-            {
-                Close();
-            }
-
-            Profiler.EndSample();
-        }
-
-        private void OnDisable()
-        {
-            Profiler.BeginSample("(NM)[NanoMonitor] OnDisable");
-
-            if (m_OpenButton)
-            {
-                m_OpenButton.onClick.RemoveListener(Open);
-            }
-
-            if (m_CloseButton)
-            {
-                m_CloseButton.onClick.RemoveListener(Close);
-            }
-
-            Profiler.EndSample();
-        }
-
-
-#if UNITY_EDITOR
-        private void OnValidate()
-        {
-            if (m_Font)
-            {
-                foreach (var ui in GetComponentsInChildren<MonitorUI>(true))
-                {
-                    ui.font = m_Font;
-                }
-            }
-
-            if (m_Opened)
-            {
-                Open();
-            }
-            else
-            {
-                Close();
-            }
-        }
-#endif
-
-        private void Open()
+        public void SetVisibleOpenObject(bool isOpen)
         {
             Profiler.BeginSample("(NM)[NanoMonitor] Open");
 
+            _isOpened = isOpen;
             _frames = 0;
-            _elapsed = m_Interval;
+            _elapsed = _interval;
             _fpsElapsed = 0;
 
-            if (m_FoldoutObject)
-            {
-                m_FoldoutObject.SetActive(true);
-            }
-
-            if (m_CloseButton)
-            {
-                m_CloseButton.gameObject.SetActive(true);
-            }
-
-            if (m_OpenButton)
-            {
-                m_OpenButton.gameObject.SetActive(false);
-            }
+            m_OpenedObject.SetActive(isOpen);
+            m_ClosedObject.SetActive(!isOpen);
 
             Profiler.EndSample();
         }
 
-        private void Close()
+        public void MoveScene(int add)
         {
-            Profiler.BeginSample("(NM)[NanoMonitor] Close");
+            var count = SceneManager.sceneCountInBuildSettings;
+            if (count <= 1) return;
 
-            if (m_FoldoutObject)
-            {
-                m_FoldoutObject.SetActive(false);
-            }
-
-            if (m_CloseButton)
-            {
-                m_CloseButton.gameObject.SetActive(false);
-            }
-
-            if (m_OpenButton)
-            {
-                m_OpenButton.gameObject.SetActive(true);
-            }
-
-            Profiler.EndSample();
+            var current = SceneManager.GetActiveScene().buildIndex;
+            var next = (current + add + count) % count;
+            SceneManager.LoadScene(next);
         }
 
-        public void SetUp(
-            Image.OriginVertical anchor,
-            bool opened,
-            float interval,
-            CustomMonitorItem[] customs,
-            int width)
+        public void Clean()
         {
-            m_Anchor = anchor;
-            m_Opened = opened;
-            m_Interval = interval;
-            m_CustomMonitorItems = customs;
-            m_Width = width;
+            Resources.UnloadUnusedAssets();
+            GC.Collect(0);
+        }
+
+        public void SetUp(Image.OriginVertical anchor, float interval, CustomMonitorItem[] customs, int width)
+        {
+            _anchor = anchor;
+            _interval = interval;
+            _customMonitorItems = customs;
+            _width = width;
         }
     }
 }

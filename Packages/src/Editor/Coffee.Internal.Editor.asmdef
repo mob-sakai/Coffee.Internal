@@ -1,5 +1,5 @@
 {
-    "name": "Coffee.Extensions.Editor",
+    "name": "Coffee.Internal.Editor",
     "references": [
         "Coffee.Extensions.Runtime"
     ],

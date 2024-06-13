@@ -9,7 +9,7 @@ namespace Coffee.Development
 {
     internal static class FindReferencesByGitGrep
     {
-        [MenuItem("Assets/Find References With Git-Grep %&R")]
+        [MenuItem("Assets/Find References With Git-Grep %&R", false, 1500)]
         private static void Run()
         {
             // get guid of selected asset,
@@ -25,7 +25,8 @@ namespace Coffee.Development
             {
                 StartInfo = new ProcessStartInfo()
                 {
-                    Arguments = $"grep -I --name-only --recurse-submodules {guid} -- ':!*.meta' Assets/ Packages/",
+                    Arguments =
+                        $"grep -I --name-only --recurse-submodules {guid} -- ':!*.meta' Assets/ Packages/ ProjectSettings/",
                     CreateNoWindow = true,
                     FileName = "git",
                     RedirectStandardError = true,
@@ -40,9 +41,22 @@ namespace Coffee.Development
             {
                 var result = new StringBuilder();
                 var outputs = p.StandardOutput.ReadToEnd().Split('\n');
-                result.AppendLine(
-                    $"<b><color=orange>{outputs.Length} references</color></b> found for <b>{path}</b> ({guid})");
-                Array.ForEach(outputs, r => result.AppendLine(r));
+                var count = outputs.Length - 1;
+                if (count == 0)
+                {
+                    result.Append($"<b><color=green>No references</color></b> ");
+                }
+                else
+                {
+                    result.Append($"<b><color=orange>{count} references</color></b> ");
+                }
+
+                result.Append($"found for <b>{path}</b> ({guid})   ");
+                Array.ForEach(outputs, r =>
+                {
+                    if (string.IsNullOrEmpty(r)) return;
+                    result.AppendLine($"-> {r}");
+                });
                 Debug.Log(result);
             };
 

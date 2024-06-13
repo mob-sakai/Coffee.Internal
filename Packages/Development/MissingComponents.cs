@@ -9,7 +9,7 @@ namespace Coffee.Development
         /// <summary>
         /// Remove missing components from active scene.
         /// </summary>
-        [MenuItem("Development/Remove Missing Components")]
+        [MenuItem("Development/Remove Missing Components", false, 2)]
         private static void RemoveMissingComponentsOnScenes()
         {
             foreach (var go in SceneManager.GetActiveScene().GetRootGameObjects())

@@ -13,6 +13,7 @@ namespace Coffee.Development
         private static readonly Regex s_RegexIgnoreIcon = new Regex("(@2x|@3x|@4x|@8x|/d_)");
         private static readonly GUILayoutOption[] s_Shrink = { GUILayout.ExpandWidth(false) };
         private static readonly GUILayoutOption[] s_Expand = { GUILayout.ExpandWidth(true) };
+        private static readonly GUILayoutOption[] s_Width200 = { GUILayout.Width(200) };
 
         [SerializeField]
         private Category m_Category = Category.Styles;
@@ -35,21 +36,6 @@ namespace Coffee.Development
             EditorGUILayout.BeginHorizontal(EditorStyles.toolbar);
             {
                 m_Category = (Category)Toolbar<Category>((int)m_Category);
-
-                // if (ToggleField(m_Category == 0, "Styles"))
-                // {
-                //     m_Category = Category.Styles;
-                // }
-                //
-                // if (ToggleField(m_Category == Category.Icons, "Icons"))
-                // {
-                //     m_Category = Category.Icons;
-                // }
-                //
-                // if (ToggleField(m_Category == Category.Examples, "Examples"))
-                // {
-                //     m_Category = Category.Examples;
-                // }
 
                 if (SearchTextField(ref _searchText))
                 {
@@ -76,7 +62,7 @@ namespace Coffee.Development
             }
         }
 
-        [MenuItem("Development/Editor Builtin")]
+        [MenuItem("Development/Editor Builtin", false, 1500)]
         private static void OpenWindow()
         {
             GetWindow<EditorBuiltinWindow>("Editor Builtin");
@@ -258,11 +244,31 @@ namespace Coffee.Development
             EditorGUILayout.TextArea("GUILayout.Toggle(true, GUIContent.none, \"IN LockButton\");", _scriptStyle);
             GUILayout.Toggle(true, GUIContent.none, "IN LockButton");
 
-            EditorGUILayout.TextArea("GUILayout.Button(\"Content\", \"sv_label_3\");", _scriptStyle);
-            if (GUILayout.Button("Content", "sv_label_3"))
+            EditorGUILayout.TextArea(
+                "GUILayout.Button(\"Content\", \"sv_label_3\");",
+                _scriptStyle);
+            GUILayout.Button("Content", "sv_label_3", s_Width200);
+
+            EditorGUILayout.TextArea(
+                "EditorGUILayout.BeginHorizontal();\n" +
+                "text = GUILayout.TextField(text, \"SearchTextField\");\n" +
+                "if (GUILayout.Button(GUIContent.none, \"SearchCancelButton\"))\n" +
+                "{\n" +
+                "    text = \"\";\n" +
+                "    GUIUtility.keyboardControl = 0;\n" +
+                "}\n" +
+                "EditorGUILayout.EndHorizontal();",
+                _scriptStyle);
+            var text = "text";
+            EditorGUILayout.BeginHorizontal(s_Width200);
+            text = GUILayout.TextField(text, "SearchTextField");
+            if (GUILayout.Button(GUIContent.none, "SearchCancelButton"))
             {
-                Debug.Log("Pressed!");
+                text = "";
+                GUIUtility.keyboardControl = 0;
             }
+
+            EditorGUILayout.EndHorizontal();
 
             GUILayout.Space(30);
             GUILayout.Label("Icon Usage", EditorStyles.boldLabel);
@@ -271,16 +277,11 @@ namespace Coffee.Development
                 "GUIContent trash = EditorGUIUtility.IconContent(\"icons/treeeditor.trash.png\");\n" +
                 "Texture2D trashIcon = EditorGUIUtility.FindTexture(\"treeeditor.trash\");\n" +
                 "GUILayout.Button(trash);\n" +
-                "GUILayout.Button(trash, EditorStyles.label);", _scriptStyle);
-            if (GUILayout.Button(trash))
-            {
-                Debug.Log("Pressed!");
-            }
+                "GUILayout.Button(trash, \"IconButton\");",
+                _scriptStyle);
 
-            if (GUILayout.Button(trash, EditorStyles.label))
-            {
-                Debug.Log("Pressed!");
-            }
+            GUILayout.Button(trash, s_Width200);
+            GUILayout.Button(trash, "IconButton");
         }
 
         private enum Category

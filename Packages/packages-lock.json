@@ -20,14 +20,6 @@
         "com.unity.ugui": "1.0.0"
       }
     },
-    "com.coffee.simple-scene-navigator": {
-      "version": "file:SceneNavigator",
-      "depth": 0,
-      "source": "embedded",
-      "dependencies": {
-        "com.unity.ugui": "1.0.0"
-      }
-    },
     "com.unity.ext.nunit": {
       "version": "1.0.6",
       "depth": 1,

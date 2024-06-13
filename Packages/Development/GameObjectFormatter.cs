@@ -96,7 +96,7 @@ namespace Coffee.Development
             }
         };
 
-        [MenuItem("Development/Format GameObject Names")]
+        [MenuItem("Development/Format GameObject Names", false, 1)]
         private static void FormatGameObjectNames()
         {
             Object.FindObjectsOfType<GameObject>()

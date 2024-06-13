@@ -18,16 +18,16 @@ MonoBehaviour:
   m_EnabledInEditor: 1
   m_AlwaysIncludeAssembly: 1
   m_InstantiateOnLoad: 1
-  m_Prefab: {fileID: 7211429669315726685, guid: bbc69caf4320d490299a7db2cafbc7f9,
+  m_Prefab: {fileID: 7211429669315726685, guid: 7cebff2d255b9433cbe23b243c193329,
     type: 3}
-  m_Opened: 1
   m_Interval: 0.5
-  m_Anchor: 1
+  m_Anchor: 0
+  m_Width: 700
   m_CustomMonitorItems:
-  - m_Format: Screen:{0}x{1}
+  - m_Format: 'Screen:{0}x{1} RT: {2}'
     m_Arg0:
       m_Path: UnityEngine.Screen, UnityEngine.CoreModule;width
     m_Arg1:
       m_Path: UnityEngine.Screen, UnityEngine.CoreModule;height
     m_Arg2:
-      m_Path: 
+      m_Path: Coffee.Internal.RenderTextureRepository, Coffee.Internal.Runtime;count

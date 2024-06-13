@@ -17,16 +17,19 @@ namespace Coffee.NanoMonitor
         private SerializedProperty _mode;
         private SerializedProperty _text;
         private SerializedProperty _textAnchor;
+        private SerializedProperty _raycastTarget;
 
         private void OnEnable()
         {
             _mode = serializedObject.FindProperty("m_Mode");
             _text = serializedObject.FindProperty("m_Text");
             _color = serializedObject.FindProperty("m_Color");
+            _raycastTarget = serializedObject.FindProperty("m_RaycastTarget");
+            _textAnchor = serializedObject.FindProperty("m_TextAnchor");
+
             var fontData = serializedObject.FindProperty("m_FontData");
             _fontSize = fontData.FindPropertyRelative("m_FontSize");
             _font = fontData.FindPropertyRelative("m_Font");
-            _textAnchor = serializedObject.FindProperty("m_TextAnchor");
         }
 
         public override void OnInspectorGUI()
@@ -43,6 +46,7 @@ namespace Coffee.NanoMonitor
             }
 
             EditorGUILayout.PropertyField(_color);
+            EditorGUILayout.PropertyField(_raycastTarget);
 
             serializedObject.ApplyModifiedProperties();
         }
