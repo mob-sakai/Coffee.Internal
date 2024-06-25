@@ -15,9 +15,9 @@ namespace Coffee.NanoMonitor
         private SerializedProperty _font;
         private SerializedProperty _fontSize;
         private SerializedProperty _mode;
+        private SerializedProperty _raycastTarget;
         private SerializedProperty _text;
         private SerializedProperty _textAnchor;
-        private SerializedProperty _raycastTarget;
 
         private void OnEnable()
         {

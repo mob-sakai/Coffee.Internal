@@ -34,7 +34,7 @@ namespace Coffee.Development
                     WorkingDirectory = Application.dataPath + "/..",
                     UseShellExecute = false
                 },
-                EnableRaisingEvents = true,
+                EnableRaisingEvents = true
             };
 
             p.Exited += (_, __) =>
@@ -44,7 +44,7 @@ namespace Coffee.Development
                 var count = outputs.Length - 1;
                 if (count == 0)
                 {
-                    result.Append($"<b><color=green>No references</color></b> ");
+                    result.Append("<b><color=green>No references</color></b> ");
                 }
                 else
                 {

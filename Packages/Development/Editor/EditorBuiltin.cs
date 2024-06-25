@@ -241,8 +241,10 @@ namespace Coffee.Development
         private void DrawExamples()
         {
             GUILayout.Label("Style Usage", EditorStyles.boldLabel);
-            EditorGUILayout.TextArea("GUILayout.Toggle(true, GUIContent.none, \"IN LockButton\");", _scriptStyle);
-            GUILayout.Toggle(true, GUIContent.none, "IN LockButton");
+            EditorGUILayout.TextArea("GUILayout.Toggle(true, GUIContent.none, \"IN LockButton\");\n" +
+                                     "// or" +
+                                     "GUILayout.Toggle(true, GUIContent.none, \"in lockbutton\");", _scriptStyle);
+            GUILayout.Toggle(true, GUIContent.none, "in lockbutton");
 
             EditorGUILayout.TextArea(
                 "GUILayout.Button(\"Content\", \"sv_label_3\");",
