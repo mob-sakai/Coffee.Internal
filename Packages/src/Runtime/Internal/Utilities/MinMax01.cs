@@ -39,6 +39,8 @@ namespace Coffee.Internal
             }
         }
 
+        public float average => (m_Max + m_Min) * 0.5f;
+
         public bool Approximately(MinMax01 other)
         {
             return Mathf.Approximately(m_Min, other.m_Min) && Mathf.Approximately(m_Max, other.m_Max);
