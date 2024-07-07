@@ -140,6 +140,9 @@ namespace Coffee.Internal
 
                 switch (tag)
                 {
+                    case string name:
+                        sb.Append(name);
+                        break;
                     case Type type:
                         AppendType(sb, type);
                         break;

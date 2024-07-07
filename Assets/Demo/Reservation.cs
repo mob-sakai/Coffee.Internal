@@ -12,7 +12,11 @@ namespace Coffee.Internal
             for (var i = 0; i < m_Entries.Length; i++)
             {
                 var e = m_Entries[i];
-                RenderTextureRepository.Get(i, Vector2.one * e.m_Size, e.m_Rate, ref e.rt, false);
+                var size = new Vector2Int(e.m_Size, e.m_Size);
+                size = RenderTextureRepository.GetPreferSize(size, e.m_Rate);
+                var hash = new Hash128((uint)GetInstanceID(), (uint)size.x, (uint)size.y, 0);
+                RenderTextureRepository.Get(hash, ref e.rt,
+                    x => new RenderTexture(RenderTextureRepository.GetDescriptor(x, false)), size);
             }
         }
 
