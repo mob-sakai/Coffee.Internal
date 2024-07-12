@@ -1,13 +1,13 @@
 {
   "dependencies": {
-    "com.coffee.coffee-extensions": {
-      "version": "file:src",
+    "com.coffee.development": {
+      "version": "file:Development",
       "depth": 0,
       "source": "embedded",
       "dependencies": {}
     },
-    "com.coffee.development": {
-      "version": "file:Development",
+    "com.coffee.internal": {
+      "version": "file:src",
       "depth": 0,
       "source": "embedded",
       "dependencies": {}

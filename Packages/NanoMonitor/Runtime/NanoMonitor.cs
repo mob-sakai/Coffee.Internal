@@ -49,6 +49,9 @@ namespace Coffee.NanoMonitor
         private MonitorUI m_UnityUsage;
 
         [SerializeField]
+        private MonitorUI m_TargetFps;
+
+        [SerializeField]
         private MonitorUI m_CustomUITemplate;
 
         private Image.OriginVertical _anchor;
@@ -116,6 +119,8 @@ namespace Coffee.NanoMonitor
             }
 
             SetVisibleOpenObject(_isOpened);
+
+            m_TargetFps.SetText("{0}", Application.targetFrameRate);
 
             Profiler.EndSample();
         }
@@ -195,6 +200,28 @@ namespace Coffee.NanoMonitor
         {
             Resources.UnloadUnusedAssets();
             GC.Collect(0);
+        }
+
+        public void ChangeTargetFps()
+        {
+            if (Application.targetFrameRate == 60)
+            {
+                Application.targetFrameRate = 30;
+            }
+            else if (Application.targetFrameRate == 30)
+            {
+                Application.targetFrameRate = 15;
+            }
+            else if (Application.targetFrameRate == 15)
+            {
+                Application.targetFrameRate = -1;
+            }
+            else
+            {
+                Application.targetFrameRate = 60;
+            }
+
+            m_TargetFps.SetText("{0}", Application.targetFrameRate);
         }
 
         public void SetUp(Image.OriginVertical anchor, float interval, CustomMonitorItem[] customs, int width)
