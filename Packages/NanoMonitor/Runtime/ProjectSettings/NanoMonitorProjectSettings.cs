@@ -46,8 +46,8 @@ namespace Coffee.NanoMonitor
         private Image.OriginVertical m_Anchor = Image.OriginVertical.Top;
 
         [SerializeField]
-        [Range(700, 1920)]
-        private int m_Width = 700;
+        [Range(750, 1000)]
+        private int m_Width = 750;
 
         [HideInInspector]
         [SerializeField]
