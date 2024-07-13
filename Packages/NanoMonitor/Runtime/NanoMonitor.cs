@@ -63,7 +63,7 @@ namespace Coffee.NanoMonitor
         private float _interval = 1f;
         private bool _isOpened = true;
         private MonitorUI _switchText;
-        private int _width = 600;
+        private int _width = 750;
 
         public static float gpuMemory => (Profiler.GetAllocatedMemoryForGraphicsDriver() >> 10) / 1024f;
         public static float unityUsed => (Profiler.GetTotalAllocatedMemoryLong() >> 10) / 1024f;
