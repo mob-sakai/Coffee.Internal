@@ -215,13 +215,23 @@ namespace Coffee.NanoMonitor
             else if (Application.targetFrameRate == 15)
             {
                 Application.targetFrameRate = -1;
+                QualitySettings.vSyncCount = 1;
             }
             else
             {
                 Application.targetFrameRate = 60;
             }
 
-            m_TargetFps.SetText("{0}", Application.targetFrameRate);
+            if (0 < Application.targetFrameRate)
+            {
+                QualitySettings.vSyncCount = 0;
+                m_TargetFps.SetText("{0}", Application.targetFrameRate);
+            }
+            else
+            {
+                QualitySettings.vSyncCount = 1;
+                m_TargetFps.SetText("vSy");
+            }
         }
 
         public void SetUp(Image.OriginVertical anchor, float interval, CustomMonitorItem[] customs, int width)
