@@ -9,7 +9,7 @@ namespace Coffee.Development
 {
     internal class EditorBuiltinWindow : EditorWindow
     {
-        private static readonly Regex s_RegexIcon = new Regex("icons/(generated/)?(.*)(\\.png|\\.asset)");
+        private static readonly Regex s_RegexIcon = new Regex("(icons/.*.asset|\\.png$)");
         private static readonly Regex s_RegexIgnoreIcon = new Regex("(@2x|@3x|@4x|@8x|/d_)");
         private static readonly GUILayoutOption[] s_Shrink = { GUILayout.ExpandWidth(false) };
         private static readonly GUILayoutOption[] s_Expand = { GUILayout.ExpandWidth(true) };
