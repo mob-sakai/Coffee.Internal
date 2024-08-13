@@ -1,5 +1,5 @@
 {
-    "name": "Coffee.OpenSesame",
+    "name": "Unity.InternalAPIEngineBridge.013",
     "rootNamespace": "",
     "references": [],
     "includePlatforms": [
@@ -11,7 +11,7 @@
     "precompiledReferences": [],
     "autoReferenced": false,
     "defineConstraints": [
-        "UNITY_2020_1_OR_NEWER"
+        "MULTI_CURVE_EDITOR_DEV"
     ],
     "versionDefines": [],
     "noEngineReferences": false

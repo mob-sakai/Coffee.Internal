@@ -1,7 +1,9 @@
 {
-    "name": "Coffee.OpenSesame",
+    "name": "Coffee.MultiCurveEditor.Test",
     "rootNamespace": "",
-    "references": [],
+    "references": [
+        "GUID:4a38b327cb2f44055b9072efc89bc5df"
+    ],
     "includePlatforms": [
         "Editor"
     ],
@@ -10,9 +12,7 @@
     "overrideReferences": false,
     "precompiledReferences": [],
     "autoReferenced": false,
-    "defineConstraints": [
-        "UNITY_2020_1_OR_NEWER"
-    ],
+    "defineConstraints": [],
     "versionDefines": [],
     "noEngineReferences": false
 }
