@@ -1,11 +1,14 @@
 ﻿using System;
 using System.IO;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Text.RegularExpressions;
 using UnityEditor;
 using UnityEditor.Compilation;
 using UnityEditorInternal;
 using UnityEngine;
+
+[assembly: InternalsVisibleTo("Coffee.OpenSesame.Test")]
 
 namespace Coffee.OpenSesame
 {

@@ -1,9 +1,6 @@
 {
-    "name": "Coffee.UIParticle.Editor.Tests",
-    "references": [
-        "Coffee.UIParticle",
-        "Coffee.UIParticle.Editor"
-    ],
+    "name": "EditorTests",
+    "references": [],
     "optionalUnityReferences": [
         "TestAssemblies"
     ],

@@ -1,12 +1,14 @@
 {
-    "name": "Coffee.UIParticle.Tests",
+    "name": "Coffee.OpenSesame.Test",
     "references": [
-        "Coffee.UIParticle"
+        "Coffee.OpenSesame"
     ],
     "optionalUnityReferences": [
         "TestAssemblies"
     ],
-    "includePlatforms": [],
+    "includePlatforms": [
+        "Editor"
+    ],
     "excludePlatforms": [],
     "allowUnsafeCode": false,
     "overrideReferences": false,

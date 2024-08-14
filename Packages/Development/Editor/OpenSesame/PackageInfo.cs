@@ -8,6 +8,7 @@ namespace Coffee.OpenSesame
         public string path { get; }
 
         public bool isValid => !string.IsNullOrEmpty(path);
+        public bool isDotNet => path.EndsWith(".dll");
 
         private PackageInfo(string packageId, string path)
         {
@@ -20,8 +21,14 @@ namespace Coffee.OpenSesame
             var path = Utils.InstallNugetPackage(packageId);
             if (string.IsNullOrEmpty(path)) return new PackageInfo(packageId, "");
 
-            // Find csc.dll
+            // DotNet version (Runtime: dotnet)
             foreach (var dll in Directory.GetFiles(path, "csc.dll", SearchOption.AllDirectories))
+            {
+                return new PackageInfo(packageId, dll);
+            }
+
+            // Net Framework version (Runtime: mono)
+            foreach (var dll in Directory.GetFiles(path, "csc.exe", SearchOption.AllDirectories))
             {
                 return new PackageInfo(packageId, dll);
             }

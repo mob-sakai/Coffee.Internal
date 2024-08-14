@@ -1,6 +1,5 @@
 {
-    "name": "Coffee.OpenSesame",
-    "rootNamespace": "",
+    "name": "Development",
     "references": [],
     "includePlatforms": [
         "Editor"

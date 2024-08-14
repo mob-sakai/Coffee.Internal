@@ -161,7 +161,7 @@ namespace Coffee.Development
             {
                 _isDirty = false;
                 EditorUtility.SetDirty(m_MainAsset);
-                AssetDatabase.SaveAssetIfDirty(m_MainAsset);
+                AssetDatabase.SaveAssets();
                 Refresh();
             }
             else if (_dirtyCount < EditorUtility.GetDirtyCount(m_MainAsset))
@@ -297,7 +297,7 @@ namespace Coffee.Development
 
             // Add sub-assets.
             Array.ForEach(assetsToAdd, x => AssetDatabase.AddObjectToAsset(x.newInstance, mainAsset));
-            AssetDatabase.SaveAssetIfDirty(mainAsset);
+            AssetDatabase.SaveAssets();
 
             // Get all SerializedObjects.
             var serializedObjects = AssetDatabase.LoadAllAssetsAtPath(AssetDatabase.GetAssetPath(mainAsset))

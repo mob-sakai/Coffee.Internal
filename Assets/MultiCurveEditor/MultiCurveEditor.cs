@@ -99,7 +99,7 @@ namespace Coffee.InternalEditor
                 var isCurrent = _currentIndex == i;
                 wrappers[i].color.a = isCurrent ? 1.0f : 0.6f;
                 wrappers[i].readOnly = !isCurrent;
-                wrappers[i].curve.CopyFrom(_props[i].animationCurveValue);
+                wrappers[i].curve.keys = _props[i].animationCurveValue.keys;
             }
 
             _curveEditor.OnGUI();

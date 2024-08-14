@@ -38,8 +38,9 @@ namespace Coffee.NanoMonitor
                                               | BindingFlags.NonPublic
                                               | BindingFlags.Static
                                               | BindingFlags.GetProperty;
-            var properties = AppDomain.CurrentDomain.GetAssemblies()
-                .SelectMany(assembly => assembly.GetTypes())
+
+            var properties = TypeCache.GetTypesDerivedFrom<object>()
+                .Where(type => type != null && !type.IsGenericTypeDefinition)
                 .SelectMany(type => type.GetProperties(bindingFlags))
                 .Where(pi => pi.GetMethod != null && s_SupportedTypes.ContainsKey(pi.PropertyType))
                 .OrderBy(pi => ConvertToMenuItem(pi, false))

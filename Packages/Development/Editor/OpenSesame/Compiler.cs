@@ -1,6 +1,8 @@
 using System;
 using System.IO;
+using System.Linq;
 using System.Reflection;
+using System.Text;
 using System.Text.RegularExpressions;
 using UnityEditor;
 using UnityEditor.Compilation;
@@ -16,112 +18,128 @@ namespace Coffee.OpenSesame
         Release = 1 << 0,
         XmlDoc = 1 << 1,
         RefDll = 1 << 2,
-        UseAnalyzer = 1 << 3
+        EnableAnalyzer = 1 << 10,
     }
 
     public static class Compiler
     {
-        private const string k_CompilerId = "OpenSesame.Net.Compilers.Toolset.4.0.1";
+#if UNITY_2021_1_OR_NEWER
+        private const string k_PackageId = "OpenSesame.Net.Compilers.Toolset.4.0.1";
+#else
+        private const string k_PackageId = "OpenSesame.Net.Compilers.4.0.1";
+#endif
         private const RegexOptions k_RegexOpt = RegexOptions.Multiline | RegexOptions.Compiled;
 
-        private static string GetDagName()
+        public static string GetResponseFilePath(string assemblyName)
         {
+#if UNITY_2021_1_OR_NEWER
             var target = (int)EditorUserBuildSettings.activeBuildTarget;
             var output = Hash128.Parse("Library/ScriptAssemblies").ToString().Substring(0, 5);
             var buildType = "E";
             var dbg = CompilationPipeline.codeOptimization == CodeOptimization.Debug ? "Dbg" : "";
+            return $"Library/Bee/artifacts/{target}{output}{buildType}{dbg}.dag/{assemblyName}.rsp";
+#else
+            return Directory.GetFiles("Temp", "UnityTempFile-*", SearchOption.TopDirectoryOnly)
+                .OrderByDescending(File.GetCreationTimeUtc)
+                .FirstOrDefault(path =>
+                {
+                    var outline = File.ReadLines(path)
+                        .FirstOrDefault(x => Regex.IsMatch(x, "^[-/]out:"));
+                    if (string.IsNullOrEmpty(outline)) return false;
 
-            return $"{target}{output}{buildType}{dbg}";
+                    var outPath = outline.Substring(6, outline.Length - 7);
+                    return Path.GetFileNameWithoutExtension(outPath) == assemblyName;
+                });
+#endif
+        }
+
+        internal static string GetBuiltinDotNetRuntimePath()
+        {
+#if UNITY_2021_2_OR_NEWER
+            return Type.GetType("UnityEditor.Scripting.NetCoreProgram, UnityEditor")
+                ?.GetField("DotNetMuxerPath", BindingFlags.Static | BindingFlags.Public)
+                ?.GetValue(null)
+                ?.ToString();
+#else
+            var sdkRoot = Type.GetType("UnityEditor.Scripting.NetCoreProgram, UnityEditor")
+                ?.GetMethod("GetSdkRoot", BindingFlags.Static | BindingFlags.NonPublic)
+                ?.Invoke(null, Array.Empty<object>()) as string ?? "";
+
+            var ext = Application.platform == RuntimePlatform.WindowsEditor ? ".exe" : "";
+            return Path.Combine(sdkRoot, "dotnet", ext);
+#endif
+        }
+
+        internal static string GetBuiltinMonoRuntimePath()
+        {
+            var sdkRoot = Type.GetType("UnityEditor.Utils.MonoInstallationFinder, UnityEditor")
+                ?.GetMethod("GetMonoBleedingEdgeInstallation", BindingFlags.Static | BindingFlags.Public)
+                ?.Invoke(null, Array.Empty<object>()) as string ?? "";
+
+            var ext = Application.platform == RuntimePlatform.WindowsEditor ? ".exe" : "";
+            return Path.Combine(sdkRoot, "bin", "mono", ext);
         }
 
         private static void UpdateResponseFile(string src, string dst, string outPath, CompileOptions options)
         {
-            var text = File.ReadAllText(src);
-            text = Regex.Replace(text, "^[-/]out:.*$", $"-out:\"{outPath}\"", k_RegexOpt);
-            text = Regex.Replace(text, "^[-/]additionalfile:.*$", "", k_RegexOpt);
-
-            // Enable reference dll
-            if ((options & CompileOptions.RefDll) != 0)
+            var p = '-';
+            using (var sw = new StreamWriter(dst, false, Encoding.UTF8))
             {
-                var refout = Path.ChangeExtension(outPath, ".ref.dll");
-                text = Regex.Replace(text, "^[-/]refout:.*$", $"-refout:{refout}", k_RegexOpt);
-            }
-            else
-            {
-                text = Regex.Replace(text, "^[-/]refout:.*$", "", k_RegexOpt);
-            }
+                foreach (var line in File.ReadLines(src))
+                {
+                    var colon = line.IndexOf(':');
+                    switch (0 < colon ? line.Substring(1, colon) : string.Empty)
+                    {
+                        case "out":
+                            p = line[0];
+                            sw.WriteLine($"{p}out:\"{outPath}\"");
+                            break;
+                        case "debug":
+                            if ((options & CompileOptions.Release) == 0) sw.WriteLine(line);
+                            break;
+                        case "analyzer":
+                            if ((options & CompileOptions.EnableAnalyzer) != 0) sw.WriteLine(line);
+                            break;
+                        case "additionalfile": // Skip
+                            break;
+                        default:
+                            sw.WriteLine(line);
+                            break;
+                    }
+                }
 
-            // Release build
-            if ((options & CompileOptions.Release) != 0)
-            {
-                text = Regex.Replace(text, "^[-/]debug.*$", "", k_RegexOpt);
-            }
+                if ((options & CompileOptions.XmlDoc) != 0)
+                {
+                    sw.WriteLine($"{p}doc:\"{Path.ChangeExtension(outPath, ".xml")}\"");
+                }
 
-            // Use Analyzer
-            if ((options & CompileOptions.UseAnalyzer) == 0)
-            {
-                text = Regex.Replace(text, "^[-/]analyzer.*$", "", k_RegexOpt);
+                if ((options & CompileOptions.RefDll) != 0)
+                {
+                    sw.WriteLine($"{p}refout:\"{Path.ChangeExtension(outPath, ".ref.dll")}\"");
+                }
             }
-
-            // Export xml doc
-            if ((options & CompileOptions.XmlDoc) != 0)
-            {
-                text += $"{Environment.NewLine}-doc:\"{Path.ChangeExtension(outPath, ".xml")}\"";
-            }
-
-            File.WriteAllText(dst, text);
         }
 
         public static void Build(string assemblyName, string outPath, CompileOptions options)
         {
-            var compilerInfo = PackageInfo.GetInstalledInfo(k_CompilerId);
+            var compilerInfo = PackageInfo.GetInstalledInfo(k_PackageId);
             if (!compilerInfo.isValid)
             {
-                Debug.LogError($"Compiler package '{k_CompilerId}' not found.");
+                Debug.LogError($"Compiler package '{k_PackageId}' not found.");
                 return;
             }
 
-            var dotnet = Type.GetType("UnityEditor.Scripting.NetCoreProgram, UnityEditor")
-                ?.GetField("DotNetMuxerPath", BindingFlags.Static | BindingFlags.Public)
-                ?.GetValue(null)
-                ?.ToString();
-            if (string.IsNullOrEmpty(dotnet))
+            var runtime = compilerInfo.isDotNet ? GetBuiltinDotNetRuntimePath() : GetBuiltinMonoRuntimePath();
+            if (string.IsNullOrEmpty(runtime))
             {
-                Debug.LogError("dotnet runtime is not found in UnityEditor.");
+                Debug.LogError($"Runtime for {k_PackageId} is not found in UnityEditor.");
                 return;
             }
 
-            var responseFile = $"Library/Bee/artifacts/{GetDagName()}.dag/{assemblyName}.rsp";
+            var responseFile = GetResponseFilePath(assemblyName);
             var modResponseFile = $"{responseFile}.mod";
             UpdateResponseFile(responseFile, modResponseFile, outPath, options);
-            Utils.ExecuteCommand(dotnet, $"{compilerInfo.path} /noconfig @{modResponseFile}");
-
-            // var p = new Process()
-            // {
-            //     StartInfo = new ProcessStartInfo()
-            //     {
-            //         Arguments = $"{compilerInfo.path} /noconfig @{modResponseFile}",
-            //         CreateNoWindow = true,
-            //         FileName = dotnet,
-            //         RedirectStandardError = true,
-            //         RedirectStandardOutput = true,
-            //         WorkingDirectory = Path.GetFullPath(Application.dataPath + "/.."),
-            //         UseShellExecute = false
-            //     },
-            //     EnableRaisingEvents = true
-            // };
-            //
-            // Debug.Log($"<b>[OpenSesame] Start ({compilerInfo.packageId})</b>: {assemblyName} -> {outPath}");
-            // p.Exited += (_, __) =>
-            // {
-            //     Debug.Log($"<b>[OpenSesame] Complete ({p.ExitCode})</b>: {p.StandardOutput.ReadToEnd()}\n" +
-            //               $"{p.StandardError.ReadToEnd()}");
-            //     if (p.ExitCode == 0)
-            //     {
-            //         AssetDatabase.Refresh();
-            //     }
-            // };
-            // p.Start();
+            Utils.ExecuteCommand(runtime, $"{compilerInfo.path} /noconfig @{modResponseFile}");
         }
     }
 }

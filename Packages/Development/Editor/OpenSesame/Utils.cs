@@ -87,9 +87,9 @@ namespace Coffee.OpenSesame
                     client.DownloadFile(url, downloadPath);
                 }
             }
-            catch (Exception e)
+            catch
             {
-                Debug.LogException(e);
+                throw;
             }
             finally
             {
@@ -142,7 +142,7 @@ namespace Coffee.OpenSesame
         /// </summary>
         /// <param name="filename">Filename</param>
         /// <param name="arguments">Arguments</param>
-        public static void ExecuteCommand(string filename, string arguments)
+        public static (int code, string stdout) ExecuteCommand(string filename, string arguments)
         {
             Debug.Log($"Execute command: {filename} {arguments}");
             var p = Process.Start(new ProcessStartInfo
@@ -175,6 +175,8 @@ namespace Coffee.OpenSesame
                 Debug.LogException(ex);
                 throw ex;
             }
+
+            return (p.ExitCode, p.StandardOutput.ReadToEnd());
         }
     }
 }
