@@ -142,7 +142,7 @@ namespace Coffee.InternalEditor
                     vSlider = false,
                     useFocusColors = false,
                     scaleWithWindow = false,
-                    undoRedoSelection = true,
+                    undoRedoSelection = true
                 }
             };
 

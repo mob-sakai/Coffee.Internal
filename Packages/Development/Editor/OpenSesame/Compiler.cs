@@ -18,7 +18,7 @@ namespace Coffee.OpenSesame
         Release = 1 << 0,
         XmlDoc = 1 << 1,
         RefDll = 1 << 2,
-        EnableAnalyzer = 1 << 10,
+        EnableAnalyzer = 1 << 10
     }
 
     public static class Compiler
@@ -39,7 +39,6 @@ namespace Coffee.OpenSesame
             var dbg = CompilationPipeline.codeOptimization == CodeOptimization.Debug ? "Dbg" : "";
             return $"Library/Bee/artifacts/{target}{output}{buildType}{dbg}.dag/{assemblyName}.rsp";
 #else
-Debug.Log($"[GetRsp] Files: {Directory.GetFiles("Temp", "UnityTempFile-*", SearchOption.TopDirectoryOnly).Length}");
             return Directory.GetFiles("Temp", "UnityTempFile-*", SearchOption.TopDirectoryOnly)
                 .OrderByDescending(File.GetCreationTimeUtc)
                 .FirstOrDefault(path =>
@@ -49,7 +48,6 @@ Debug.Log($"[GetRsp] Files: {Directory.GetFiles("Temp", "UnityTempFile-*", Searc
                     if (string.IsNullOrEmpty(outline)) return false;
 
                     var outPath = outline.Substring(6, outline.Length - 7);
-                    Debug.Log($"[GetRsp] check: {outline} -> {outPath}, {assemblyName}");
                     return Path.GetFileNameWithoutExtension(outPath) == assemblyName;
                 });
 #endif
@@ -68,7 +66,8 @@ Debug.Log($"[GetRsp] Files: {Directory.GetFiles("Temp", "UnityTempFile-*", Searc
                 ?.Invoke(null, Array.Empty<object>()) as string;
             if (string.IsNullOrEmpty(sdkCoreRoot)) return "";
 
-            var sdkRoot = Directory.GetDirectories(sdkCoreRoot, "Sdk*", SearchOption.TopDirectoryOnly)
+            var sdkRoot = Directory.GetDirectories(sdkCoreRoot)
+                .OrderByDescending(x => Path.GetFileName(x) == "Sdk")
                 .FirstOrDefault();
             if (string.IsNullOrEmpty(sdkRoot)) return "";
 
@@ -152,6 +151,7 @@ Debug.Log($"[GetRsp] Files: {Directory.GetFiles("Temp", "UnityTempFile-*", Searc
                 Debug.LogError($"Response file for {assemblyName} is not found.");
                 return;
             }
+
             var modRsp = ModifyResponseFile(rsp, outPath, options);
             Utils.ExecuteCommand(runtime, $"{compilerInfo.path} /noconfig @{modRsp}");
         }

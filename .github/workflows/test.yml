@@ -5,7 +5,7 @@ name: 🧪 Test
 env:
   # MINIMUM_VERSION: The minimum version of Unity.
   MINIMUM_VERSION: "2019.4"
-  EXCLUDE_FILTER: '(2020.2.0)'
+  EXCLUDE_FILTER: '(2020.2.0|2023.3)'
 
 on:
   workflow_dispatch:
@@ -54,7 +54,7 @@ jobs:
     needs: setup
     strategy:
       fail-fast: false
-      max-parallel: 8
+      max-parallel: 4
       matrix:
         unityVersion: ${{ fromJson(needs.setup.outputs.unityVersions) }}
     steps:
