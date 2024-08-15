@@ -39,6 +39,7 @@ namespace Coffee.OpenSesame
             var dbg = CompilationPipeline.codeOptimization == CodeOptimization.Debug ? "Dbg" : "";
             return $"Library/Bee/artifacts/{target}{output}{buildType}{dbg}.dag/{assemblyName}.rsp";
 #else
+Debug.Log($"[GetRsp] Files: {Directory.GetFiles("Temp", "UnityTempFile-*", SearchOption.TopDirectoryOnly).Length}");
             return Directory.GetFiles("Temp", "UnityTempFile-*", SearchOption.TopDirectoryOnly)
                 .OrderByDescending(File.GetCreationTimeUtc)
                 .FirstOrDefault(path =>
@@ -146,6 +147,11 @@ namespace Coffee.OpenSesame
             }
 
             var rsp = GetResponseFilePath(assemblyName);
+            if (string.IsNullOrEmpty(rsp))
+            {
+                Debug.LogError($"Response file for {assemblyName} is not found.");
+                return;
+            }
             var modRsp = ModifyResponseFile(rsp, outPath, options);
             Utils.ExecuteCommand(runtime, $"{compilerInfo.path} /noconfig @{modRsp}");
         }
