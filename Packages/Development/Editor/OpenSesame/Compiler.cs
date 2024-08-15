@@ -48,6 +48,7 @@ namespace Coffee.OpenSesame
                     if (string.IsNullOrEmpty(outline)) return false;
 
                     var outPath = outline.Substring(6, outline.Length - 7);
+                    Debug.Log($"[GetRsp] check: {outline} -> {outPath}, {assemblyName}");
                     return Path.GetFileNameWithoutExtension(outPath) == assemblyName;
                 });
 #endif
@@ -61,9 +62,14 @@ namespace Coffee.OpenSesame
                 ?.GetValue(null)
                 ?.ToString();
 #else
-            var sdkRoot = Type.GetType("UnityEditor.Scripting.NetCoreProgram, UnityEditor")
-                ?.GetMethod("GetSdkRoot", BindingFlags.Static | BindingFlags.NonPublic)
-                ?.Invoke(null, Array.Empty<object>()) as string ?? "";
+            var sdkCoreRoot = Type.GetType("UnityEditor.Scripting.NetCoreProgram, UnityEditor")
+                ?.GetMethod("GetNetCoreRoot", BindingFlags.Static | BindingFlags.NonPublic)
+                ?.Invoke(null, Array.Empty<object>()) as string;
+            if (string.IsNullOrEmpty(sdkCoreRoot)) return "";
+
+            var sdkRoot = Directory.GetDirectories(sdkCoreRoot, "Sdk*", SearchOption.TopDirectoryOnly)
+                .FirstOrDefault();
+            if (string.IsNullOrEmpty(sdkRoot)) return "";
 
             var ext = Application.platform == RuntimePlatform.WindowsEditor ? ".exe" : "";
             return Path.Combine(sdkRoot, "dotnet", ext);
@@ -80,15 +86,16 @@ namespace Coffee.OpenSesame
             return Path.Combine(sdkRoot, "bin", "mono", ext);
         }
 
-        private static void UpdateResponseFile(string src, string dst, string outPath, CompileOptions options)
+        private static string ModifyResponseFile(string src, string outPath, CompileOptions options)
         {
+            var dst = Path.Combine(Path.GetDirectoryName(src), $"mod_{Path.GetFileName(src)}");
             var p = '-';
             using (var sw = new StreamWriter(dst, false, Encoding.UTF8))
             {
                 foreach (var line in File.ReadLines(src))
                 {
                     var colon = line.IndexOf(':');
-                    switch (0 < colon ? line.Substring(1, colon) : string.Empty)
+                    switch (0 < colon ? line.Substring(1, colon - 1) : string.Empty)
                     {
                         case "out":
                             p = line[0];
@@ -118,6 +125,8 @@ namespace Coffee.OpenSesame
                     sw.WriteLine($"{p}refout:\"{Path.ChangeExtension(outPath, ".ref.dll")}\"");
                 }
             }
+
+            return dst;
         }
 
         public static void Build(string assemblyName, string outPath, CompileOptions options)
@@ -136,10 +145,9 @@ namespace Coffee.OpenSesame
                 return;
             }
 
-            var responseFile = GetResponseFilePath(assemblyName);
-            var modResponseFile = $"{responseFile}.mod";
-            UpdateResponseFile(responseFile, modResponseFile, outPath, options);
-            Utils.ExecuteCommand(runtime, $"{compilerInfo.path} /noconfig @{modResponseFile}");
+            var rsp = GetResponseFilePath(assemblyName);
+            var modRsp = ModifyResponseFile(rsp, outPath, options);
+            Utils.ExecuteCommand(runtime, $"{compilerInfo.path} /noconfig @{modRsp}");
         }
     }
 }

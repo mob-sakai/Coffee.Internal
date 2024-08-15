@@ -558,7 +558,7 @@ PlayerSettings:
   webGLThreadsSupport: 0
   webGLWasmStreaming: 0
   scriptingDefineSymbols:
-    Standalone: MULTI_CURVE_EDITOR_DEV
+    0: MULTI_CURVE_EDITOR_DEV
   platformArchitecture: {}
   scriptingBackend: {}
   il2cppCompilerConfiguration: {}
