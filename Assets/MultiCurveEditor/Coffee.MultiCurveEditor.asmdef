@@ -9,7 +9,9 @@
     "overrideReferences": false,
     "precompiledReferences": [],
     "autoReferenced": false,
-    "defineConstraints": [],
+    "defineConstraints": [
+        "MULTI_CURVE_EDITOR_DEV"
+    ],
     "versionDefines": [],
     "noEngineReferences": false
 }

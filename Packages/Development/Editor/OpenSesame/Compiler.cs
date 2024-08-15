@@ -18,7 +18,9 @@ namespace Coffee.OpenSesame
         Release = 1 << 0,
         XmlDoc = 1 << 1,
         RefDll = 1 << 2,
-        EnableAnalyzer = 1 << 10
+        Deterministic = 1 << 11,
+        Optimize = 1 << 12,
+        EnableAnalyzer = 1 << 20
     }
 
     public static class Compiler
@@ -94,20 +96,24 @@ namespace Coffee.OpenSesame
             {
                 foreach (var line in File.ReadLines(src))
                 {
+                    if (string.IsNullOrEmpty(line)) continue;
+
                     var colon = line.IndexOf(':');
-                    switch (0 < colon ? line.Substring(1, colon - 1) : string.Empty)
+                    switch (0 < colon ? line.Substring(1, colon - 1) : line.Substring(1))
                     {
                         case "out":
                             p = line[0];
                             sw.WriteLine($"{p}out:\"{outPath}\"");
                             break;
-                        case "debug":
-                            if ((options & CompileOptions.Release) == 0) sw.WriteLine(line);
-                            break;
                         case "analyzer":
                             if ((options & CompileOptions.EnableAnalyzer) != 0) sw.WriteLine(line);
                             break;
-                        case "additionalfile": // Skip
+                        case "debug":
+                        case "additionalfile":
+                        case "optimize":
+                        case "optimize+":
+                        case "optimize-":
+                        case "deterministic":
                             break;
                         default:
                             sw.WriteLine(line);
@@ -115,15 +121,16 @@ namespace Coffee.OpenSesame
                     }
                 }
 
+                if ((options & CompileOptions.Release) == 0)
+                    sw.WriteLine($"{p}debug:portable");
+                if ((options & CompileOptions.Optimize) != 0)
+                    sw.WriteLine($"{p}optimize");
+                if ((options & CompileOptions.Deterministic) != 0)
+                    sw.WriteLine($"{p}deterministic");
                 if ((options & CompileOptions.XmlDoc) != 0)
-                {
                     sw.WriteLine($"{p}doc:\"{Path.ChangeExtension(outPath, ".xml")}\"");
-                }
-
                 if ((options & CompileOptions.RefDll) != 0)
-                {
                     sw.WriteLine($"{p}refout:\"{Path.ChangeExtension(outPath, ".ref.dll")}\"");
-                }
             }
 
             return dst;

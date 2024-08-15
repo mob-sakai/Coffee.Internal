@@ -33,9 +33,6 @@ namespace Coffee.OpenSesame
             {
                 EditorJsonUtility.FromJsonOverwrite(File.ReadAllText(k_Path), this);
             }
-
-            hideFlags &= ~HideFlags.NotEditable;
-            EditorUtility.SetDirty(this);
         }
 
         private void StartCompileAll()
@@ -79,6 +76,7 @@ namespace Coffee.OpenSesame
             {
                 guiHandler = _ =>
                 {
+                    instance.hideFlags &= ~HideFlags.NotEditable;
                     Editor.CreateCachedEditor(instance, null, ref s_Editor);
                     if (s_Editor.DrawDefaultInspector())
                     {

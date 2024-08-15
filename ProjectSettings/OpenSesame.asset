@@ -12,8 +12,8 @@
                     "guid": "4a38b327cb2f44055b9072efc89bc5df",
                     "type": 3
                 },
-                "m_DstAssemblyPath": "Assets/MultiCurveEditor/MultiCurveEditor.dll",
-                "m_Options": 1
+                "m_DstAssemblyPath": "Assets/MultiCurveEditor/Coffee.MultiCurveEditor.dll",
+                "m_Options": 2049
             }
         ],
         "m_WillCompileOnLoad": false
