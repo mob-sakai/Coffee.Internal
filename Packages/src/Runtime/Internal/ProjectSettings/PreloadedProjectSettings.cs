@@ -103,7 +103,6 @@ namespace Coffee.Internal
     }
 #endif
 
-
     public abstract class PreloadedProjectSettings<T> : PreloadedProjectSettings
         where T : PreloadedProjectSettings<T>
     {
