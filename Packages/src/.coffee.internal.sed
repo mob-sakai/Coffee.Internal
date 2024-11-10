@@ -4,3 +4,4 @@ s/Coffee.UIParticleInternal/Coffee.Internal/g
 s/Coffee.CompositeCanvasRendererInternal/Coffee.Internal/g
 s/Coffee.UIMaterialPropertyInjectorInternal/Coffee.Internal/g
 s/Coffee.UIPostProcessingInternal/Coffee.Internal/g
+s/Coffee.UIEffectInternal/Coffee.Internal/g
