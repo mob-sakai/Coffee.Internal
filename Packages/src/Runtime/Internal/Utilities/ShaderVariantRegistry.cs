@@ -2,9 +2,11 @@ using System.Collections.Generic;
 using UnityEngine;
 using System;
 #if UNITY_EDITOR
+using System.IO;
 using Object = UnityEngine.Object;
 using System.Linq;
 using System.Reflection;
+using System.Text.RegularExpressions;
 using UnityEditor;
 using UnityEditorInternal;
 #endif
@@ -15,19 +17,39 @@ namespace Coffee.Internal
     public class ShaderVariantRegistry
     {
         [Serializable]
-        public class StringPair
+        internal class StringPair : IEquatable<StringPair>
         {
             public string key;
             public string value;
+
+            public bool Equals(StringPair other)
+            {
+                if (other == null) return false;
+                if (ReferenceEquals(this, other)) return true;
+                return key == other.key && value == other.value;
+            }
+
+            public override bool Equals(object obj)
+            {
+                return obj is StringPair other && Equals(other);
+            }
+
+            public override int GetHashCode()
+            {
+                unchecked
+                {
+                    return ((key != null ? key.GetHashCode() : 0) * 397) ^ (value != null ? value.GetHashCode() : 0);
+                }
+            }
         }
 
-        private Dictionary<int, string> _cachedAliases = new Dictionary<int, string>();
+        private Dictionary<int, string> _cachedOptionalShaders = new Dictionary<int, string>();
 
         [SerializeField]
-        private bool m_ErrorWhenFallback = false;
+        private bool m_ErrorOnUnregisteredVariant = false;
 
         [SerializeField]
-        private List<StringPair> m_ShaderAliases = new List<StringPair>();
+        private List<StringPair> m_OptionalShaders = new List<StringPair>();
 
         [SerializeField]
         private List<StringPair> m_UnregisteredVariants = new List<StringPair>();
@@ -37,66 +59,92 @@ namespace Coffee.Internal
 
         public ShaderVariantCollection shaderVariantCollection => m_Asset;
 
-        public Shader FindAliasShader(Shader shader, string aliasNameFormat, string defaultAliasName)
+        public Shader FindOptionalShader(Shader shader, string format, string defaultOptionalShaderName)
         {
             if (!shader) return null;
 
             // Already cached.
             var id = shader.GetInstanceID();
-            if (_cachedAliases.TryGetValue(id, out var aliasName))
+            if (_cachedOptionalShaders.TryGetValue(id, out var optionalShaderName))
             {
-                return Shader.Find(aliasName);
+                return Shader.Find(optionalShaderName);
             }
 
-            // Find alias.
-            Shader aliasShader;
+            // Find optional shader.
+            Shader optionalShader;
             var shaderName = shader.name;
-            foreach (var alias in m_ShaderAliases)
+            foreach (var alias in m_OptionalShaders)
             {
                 if (alias.key != shaderName) continue;
-                aliasShader = Shader.Find(alias.value);
-                if (aliasShader)
+                optionalShader = Shader.Find(alias.value);
+                if (optionalShader)
                 {
-                    _cachedAliases[id] = alias.value;
-                    return aliasShader;
+                    _cachedOptionalShaders[id] = alias.value;
+                    return optionalShader;
                 }
             }
 
-            // Find alias by format.
-            aliasName = string.Format(aliasNameFormat, shader.name);
-            aliasShader = Shader.Find(aliasName);
-            if (aliasShader)
+            // Find optional shader by format.
+            optionalShaderName = string.Format(format, shader.name);
+            optionalShader = Shader.Find(optionalShaderName);
+            if (optionalShader)
             {
-                _cachedAliases[id] = aliasName;
-                return aliasShader;
+                _cachedOptionalShaders[id] = optionalShaderName;
+                return optionalShader;
             }
 
-            // Find default alias.
-            _cachedAliases[id] = defaultAliasName;
-            return Shader.Find(defaultAliasName);
+            // Find default optional shader.
+            _cachedOptionalShaders[id] = defaultOptionalShaderName;
+            return Shader.Find(defaultOptionalShaderName);
         }
 
 #if UNITY_EDITOR
-        public void InitializeIfNeeded(Object owner)
+        private HashSet<StringPair> _logVariants = new HashSet<StringPair>();
+
+        public void InitializeIfNeeded(Object owner, string optionalName)
         {
+            // Register optional shader names by shader comment.
+            if (!string.IsNullOrEmpty(optionalName))
+            {
+                var aliases = ShaderUtil.GetAllShaderInfo()
+                    .Where(s => s.name.Contains(optionalName))
+                    .Select(s => (s.name, path: AssetDatabase.GetAssetPath(Shader.Find(s.name))))
+                    .Where(x => !string.IsNullOrEmpty(x.path))
+                    .SelectMany(x =>
+                    {
+                        return File.ReadLines(x.path)
+                            .Take(10)
+                            .Select(line => Regex.Match(line, @"//\s*OptionalShaderFor:\s*(.*)$"))
+                            .Where(match => match.Success)
+                            .Select(match => new StringPair() { key = match.Groups[1].Value, value = x.name });
+                    })
+                    .Where(pair => m_OptionalShaders.All(x => x.key != pair.key))
+                    .ToArray();
+                if (0 < aliases.Length)
+                {
+                    m_OptionalShaders.AddRange(aliases);
+                    EditorUtility.SetDirty(owner);
+                }
+            }
+
             if (!m_Asset && AssetDatabase.IsMainAsset(owner))
             {
-                m_Asset = new ShaderVariantCollection()
+                // Find ShaderVariantCollection in owner.
+                var path = AssetDatabase.GetAssetPath(owner);
+                var collection = AssetDatabase.LoadAssetAtPath<ShaderVariantCollection>(path);
+                if (collection)
                 {
-                    name = "ShaderVariants"
-                };
-                AssetDatabase.AddObjectToAsset(m_Asset, owner);
+                    m_Asset = collection;
+                }
+                // Create new ShaderVariantCollection.
+                else
+                {
+                    m_Asset = new ShaderVariantCollection() { name = "ShaderVariants" };
+                    AssetDatabase.AddObjectToAsset(m_Asset, owner);
+                }
+
                 EditorUtility.SetDirty(owner);
                 AssetDatabase.SaveAssets();
-            }
-        }
-
-        public void InitializeIfNeeded(Object owner, ShaderVariantCollection collection)
-        {
-            if (!m_Asset && AssetDatabase.IsMainAsset(owner))
-            {
-                m_Asset = collection;
-                EditorUtility.SetDirty(owner);
             }
         }
 
@@ -105,82 +153,90 @@ namespace Coffee.Internal
             if (!material || !material.shader || !m_Asset) return;
 
             var shaderName = material.shader.name;
-            var keywords = string.Join("|", material.shaderKeywords);
+            var validKeywords = material.shaderKeywords
+                .Where(x => !Regex.IsMatch(x, "(_EDITOR|EDITOR_)"))
+                .ToArray();
+            var keywords = string.Join(' ', validKeywords);
             var variant = new ShaderVariantCollection.ShaderVariant
             {
                 shader = material.shader,
-                keywords = material.shaderKeywords
+                keywords = validKeywords
             };
-            Predicate<StringPair> match = x => x.key == shaderName && x.value == keywords;
 
             // Already registered.
+            var pair = new StringPair() { key = shaderName, value = keywords };
             if (m_Asset.Contains(variant))
             {
-                m_UnregisteredVariants.RemoveAll(match);
+                m_UnregisteredVariants.Remove(pair);
                 return;
             }
 
             // Error when unregistered variant.
-            if (m_ErrorWhenFallback)
+            if (m_ErrorOnUnregisteredVariant)
             {
-                if (m_UnregisteredVariants.Find(match) == null)
+                if (!m_UnregisteredVariants.Contains(pair))
                 {
-                    m_UnregisteredVariants.Add(new StringPair() { key = shaderName, value = keywords });
+                    m_UnregisteredVariants.Add(pair);
                 }
 
-                keywords = string.IsNullOrEmpty(keywords) ? "no keywords" : keywords;
-                Debug.LogError($"Shader variant '{shaderName} <{keywords}>' is not registered.\n" +
-                               $"Register it in 'ProjectSettings > {path}' to use it in player.",
-                    m_Asset);
+                if (_logVariants.Add(pair))
+                {
+                    keywords = string.IsNullOrEmpty(keywords) ? "no keywords" : keywords;
+                    Debug.LogError($"Shader variant '{shaderName} <{keywords}>' is not registered.\n" +
+                                   $"Register it in 'ProjectSettings > {path}' to use it in player.", m_Asset);
+                }
+
                 return;
             }
 
             m_Asset.Add(variant);
-            m_UnregisteredVariants.RemoveAll(match);
+            m_UnregisteredVariants.Remove(pair);
         }
 #endif
     }
 
 #if UNITY_EDITOR
-    internal class ShaderRegistryEditor
+    internal class ShaderVariantRegistryEditor
     {
         private static readonly MethodInfo s_MiDrawShaderEntry =
             Type.GetType("UnityEditor.ShaderVariantCollectionInspector, UnityEditor")
                 ?.GetMethod("DrawShaderEntry", BindingFlags.NonPublic | BindingFlags.Instance);
 
-        private readonly SerializedProperty _errorWhenFallback;
+        private readonly SerializedProperty _errorOnUnregisteredVariant;
         private readonly SerializedProperty _asset;
         private readonly ReorderableList _rlShaderAliases;
         private readonly ReorderableList _rlUnregisteredVariants;
         private Editor _editor;
         private bool _expand;
 
-        public ShaderRegistryEditor(SerializedProperty property, string optionName)
+        public ShaderVariantRegistryEditor(SerializedProperty property, string optionName)
         {
             var so = property.serializedObject;
-            var shaderAliases = property.FindPropertyRelative("m_ShaderAliases");
+            var optionalShaders = property.FindPropertyRelative("m_OptionalShaders");
             var unregisteredVariants = property.FindPropertyRelative("m_UnregisteredVariants");
-            _errorWhenFallback = property.FindPropertyRelative("m_ErrorWhenFallback");
+            _errorOnUnregisteredVariant = property.FindPropertyRelative("m_ErrorOnUnregisteredVariant");
             _asset = property.FindPropertyRelative("m_Asset");
 
-            _rlShaderAliases = new ReorderableList(so, shaderAliases, false, true, true, true);
+            _rlShaderAliases = new ReorderableList(so, optionalShaders, false, true, true, true);
             _rlShaderAliases.drawHeaderCallback = rect =>
             {
                 var rLabel = new Rect(rect.x, rect.y, rect.width - 80, rect.height);
-                EditorGUI.LabelField(rLabel, $"Optional Shader Aliases {optionName}");
+                EditorGUI.LabelField(rLabel,
+                    EditorGUIUtility.TrTextContent($"Optional Shaders {optionName}",
+                        "Specify optional shaders explicitly."));
 
                 var rButton = new Rect(rect.x + rect.width - 80, rect.y, 80, rect.height - 4);
                 if (GUI.Button(rButton, "Clear All", EditorStyles.miniButton))
                 {
-                    shaderAliases.ClearArray();
+                    optionalShaders.ClearArray();
                 }
             };
             _rlShaderAliases.elementHeight = EditorGUIUtility.singleLineHeight * 2 + 4;
             _rlShaderAliases.drawElementCallback = (r, index, isActive, isFocused) =>
             {
-                if (shaderAliases.arraySize <= index) return;
+                if (optionalShaders.arraySize <= index) return;
 
-                var element = shaderAliases.GetArrayElementAtIndex(index);
+                var element = optionalShaders.GetArrayElementAtIndex(index);
                 if (element == null) return;
 
                 var key = element.FindPropertyRelative("key");
@@ -189,7 +245,7 @@ namespace Coffee.Internal
                 var rKey = new Rect(r.x, r.y + 2, r.width, h);
                 if (GUI.Button(rKey, key.stringValue, EditorStyles.popup))
                 {
-                    ShowShaderDropdown(r, key, optionName, false);
+                    ShowShaderDropdown(key, optionName, false);
                 }
 
                 var rArrow = new Rect(r.x, r.y + h + 4, 20, h);
@@ -198,20 +254,20 @@ namespace Coffee.Internal
                 var rValue = new Rect(r.x + 20, r.y + h + 4, r.width - 20, h);
                 if (GUI.Button(rValue, value.stringValue, EditorStyles.popup))
                 {
-                    ShowShaderDropdown(r, value, optionName, true);
+                    ShowShaderDropdown(value, optionName, true);
                 }
             };
 
             _rlUnregisteredVariants = new ReorderableList(so, unregisteredVariants, false, true, false, true);
             _rlUnregisteredVariants.drawHeaderCallback = rect =>
             {
-                var rLabel = new Rect(rect.x, rect.y, 200, rect.height);
-                EditorGUI.LabelField(rLabel, "Unregistered Shader Variants");
-
-                var rWarning = new Rect(rect.x + 170, rect.y, 20, rect.height);
+                var rWarning = new Rect(rect.x, rect.y, 20, rect.height);
                 var icon = EditorGUIUtility.TrIconContent("warning",
                     "These variants are not registered.\nRegister them to use in player.");
                 EditorGUI.LabelField(rWarning, icon);
+
+                var rLabel = new Rect(rect.x + 20, rect.y, 200, rect.height);
+                EditorGUI.LabelField(rLabel, "Unregistered Shader Variants");
 
                 var rButton = new Rect(rect.x + rect.width - 80, rect.y, 80, rect.height - 4);
                 if (GUI.Button(rButton, "Clear All", EditorStyles.miniButton))
@@ -252,10 +308,16 @@ namespace Coffee.Internal
         {
             _rlShaderAliases.DoLayoutList();
             _expand = DrawRegisteredShaderVariants(_expand, _asset, ref _editor);
-            EditorGUILayout.PropertyField(_errorWhenFallback);
             if (0 < _rlUnregisteredVariants.serializedProperty.arraySize)
             {
+                EditorGUILayout.Space(4);
                 _rlUnregisteredVariants.DoLayoutList();
+                EditorGUILayout.Space(-20);
+                EditorGUILayout.PropertyField(_errorOnUnregisteredVariant);
+            }
+            else
+            {
+                EditorGUILayout.PropertyField(_errorOnUnregisteredVariant);
             }
         }
 
@@ -269,7 +331,7 @@ namespace Coffee.Internal
             collection.Add(new ShaderVariantCollection.ShaderVariant
             {
                 shader = shader,
-                keywords = keywords.Split('|')
+                keywords = keywords.Split(' ')
             });
             EditorUtility.SetDirty(collection);
         }
@@ -281,10 +343,13 @@ namespace Coffee.Internal
 
             EditorGUILayout.Space();
             var r = EditorGUILayout.GetControlRect(false, 20);
-            var rLabel = new Rect(r.x, r.y, r.width - 80, r.height);
+            var rBg = new Rect(r.x - 3, r.y, r.width + 6, r.height);
+            EditorGUI.LabelField(rBg, GUIContent.none, "RL Header");
+
+            var rLabel = new Rect(r.x + 5, r.y, 200, r.height);
             expand = EditorGUI.Foldout(rLabel, expand, "Registered Shader Variants");
 
-            var rButton = new Rect(r.x + r.width - 80, r.y + 2, 80, r.height - 4);
+            var rButton = new Rect(r.x + r.width - 82, r.y + 1, 80, r.height - 4);
             if (GUI.Button(rButton, "Clear All", EditorStyles.miniButton))
             {
                 collection.Clear();
@@ -308,7 +373,7 @@ namespace Coffee.Internal
             return expand;
         }
 
-        private static void ShowShaderDropdown(Rect rect, SerializedProperty property, string option, bool included)
+        private static void ShowShaderDropdown(SerializedProperty property, string option, bool included)
         {
             var menu = new GenericMenu();
             var current = property.stringValue;
@@ -325,7 +390,7 @@ namespace Coffee.Internal
                 });
             }
 
-            menu.DropDown(rect);
+            menu.ShowAsContext();
         }
     }
 #endif
