@@ -156,7 +156,7 @@ namespace Coffee.Internal
             var validKeywords = material.shaderKeywords
                 .Where(x => !Regex.IsMatch(x, "(_EDITOR|EDITOR_)"))
                 .ToArray();
-            var keywords = string.Join(' ', validKeywords);
+            var keywords = string.Join(" ", validKeywords);
             var variant = new ShaderVariantCollection.ShaderVariant
             {
                 shader = material.shader,
