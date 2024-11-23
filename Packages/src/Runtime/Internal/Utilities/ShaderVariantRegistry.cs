@@ -46,16 +46,18 @@ namespace Coffee.Internal
         private Dictionary<int, string> _cachedOptionalShaders = new Dictionary<int, string>();
 
         [SerializeField]
-        private bool m_ErrorOnUnregisteredVariant = false;
-
-        [SerializeField]
         private List<StringPair> m_OptionalShaders = new List<StringPair>();
 
         [SerializeField]
-        private List<StringPair> m_UnregisteredVariants = new List<StringPair>();
+        internal ShaderVariantCollection m_Asset;
+
+#if UNITY_EDITOR
+        [SerializeField]
+        private bool m_ErrorOnUnregisteredVariant = false;
 
         [SerializeField]
-        internal ShaderVariantCollection m_Asset;
+        private List<StringPair> m_UnregisteredVariants = new List<StringPair>();
+#endif
 
         public ShaderVariantCollection shaderVariantCollection => m_Asset;
 
@@ -73,13 +75,13 @@ namespace Coffee.Internal
             // Find optional shader.
             Shader optionalShader;
             var shaderName = shader.name;
-            foreach (var alias in m_OptionalShaders)
+            foreach (var pair in m_OptionalShaders)
             {
-                if (alias.key != shaderName) continue;
-                optionalShader = Shader.Find(alias.value);
+                if (pair.key != shaderName) continue;
+                optionalShader = Shader.Find(pair.value);
                 if (optionalShader)
                 {
-                    _cachedOptionalShaders[id] = alias.value;
+                    _cachedOptionalShaders[id] = pair.value;
                     return optionalShader;
                 }
             }
@@ -106,7 +108,7 @@ namespace Coffee.Internal
             // Register optional shader names by shader comment.
             if (!string.IsNullOrEmpty(optionalName))
             {
-                var aliases = ShaderUtil.GetAllShaderInfo()
+                var optionalShaders = ShaderUtil.GetAllShaderInfo()
                     .Where(s => s.name.Contains(optionalName))
                     .Select(s => (s.name, path: AssetDatabase.GetAssetPath(Shader.Find(s.name))))
                     .Where(x => !string.IsNullOrEmpty(x.path))
@@ -120,9 +122,9 @@ namespace Coffee.Internal
                     })
                     .Where(pair => m_OptionalShaders.All(x => x.key != pair.key))
                     .ToArray();
-                if (0 < aliases.Length)
+                if (0 < optionalShaders.Length)
                 {
-                    m_OptionalShaders.AddRange(aliases);
+                    m_OptionalShaders.AddRange(optionalShaders);
                     EditorUtility.SetDirty(owner);
                 }
             }
@@ -204,7 +206,7 @@ namespace Coffee.Internal
 
         private readonly SerializedProperty _errorOnUnregisteredVariant;
         private readonly SerializedProperty _asset;
-        private readonly ReorderableList _rlShaderAliases;
+        private readonly ReorderableList _rlOptionalShaders;
         private readonly ReorderableList _rlUnregisteredVariants;
         private Editor _editor;
         private bool _expand;
@@ -217,8 +219,8 @@ namespace Coffee.Internal
             _errorOnUnregisteredVariant = property.FindPropertyRelative("m_ErrorOnUnregisteredVariant");
             _asset = property.FindPropertyRelative("m_Asset");
 
-            _rlShaderAliases = new ReorderableList(so, optionalShaders, false, true, true, true);
-            _rlShaderAliases.drawHeaderCallback = rect =>
+            _rlOptionalShaders = new ReorderableList(so, optionalShaders, false, true, true, true);
+            _rlOptionalShaders.drawHeaderCallback = rect =>
             {
                 var rLabel = new Rect(rect.x, rect.y, rect.width - 80, rect.height);
                 EditorGUI.LabelField(rLabel,
@@ -231,8 +233,8 @@ namespace Coffee.Internal
                     optionalShaders.ClearArray();
                 }
             };
-            _rlShaderAliases.elementHeight = EditorGUIUtility.singleLineHeight * 2 + 4;
-            _rlShaderAliases.drawElementCallback = (r, index, isActive, isFocused) =>
+            _rlOptionalShaders.elementHeight = EditorGUIUtility.singleLineHeight * 2 + 4;
+            _rlOptionalShaders.drawElementCallback = (r, index, isActive, isFocused) =>
             {
                 if (optionalShaders.arraySize <= index) return;
 
@@ -306,19 +308,19 @@ namespace Coffee.Internal
 
         public void Draw()
         {
-            _rlShaderAliases.DoLayoutList();
+            _rlOptionalShaders.DoLayoutList();
             _expand = DrawRegisteredShaderVariants(_expand, _asset, ref _editor);
             if (0 < _rlUnregisteredVariants.serializedProperty.arraySize)
             {
                 EditorGUILayout.Space(4);
                 _rlUnregisteredVariants.DoLayoutList();
                 EditorGUILayout.Space(-20);
-                EditorGUILayout.PropertyField(_errorOnUnregisteredVariant);
             }
-            else
-            {
-                EditorGUILayout.PropertyField(_errorOnUnregisteredVariant);
-            }
+
+            var labelWidth = EditorGUIUtility.labelWidth;
+            EditorGUIUtility.labelWidth = 180;
+            EditorGUILayout.PropertyField(_errorOnUnregisteredVariant);
+            EditorGUIUtility.labelWidth = labelWidth;
         }
 
         private static void AddVariant(ShaderVariantCollection collection, string shaderName, string keywords)

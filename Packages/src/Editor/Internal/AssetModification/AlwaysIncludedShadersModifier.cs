@@ -36,7 +36,6 @@ namespace Coffee.Internal.AssetModification
             var shader = AssetDatabase.LoadAssetAtPath<Shader>(path);
             if (!shader) return false;
 
-            Debug.Log($"AlwaysIncludedShaders: {shader.name}");
             var included = AlwaysIncludedShadersProxy.GetShaders()
                 .Contains(shader);
             var shouldExclude = excludePattern?.IsMatch(shader.name) ?? false;
