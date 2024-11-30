@@ -20,7 +20,7 @@ namespace Coffee.Development
 
         private static void EnableAllLayoutGroups(bool enabled)
         {
-            foreach (var l in Object.FindObjectsOfType<LayoutGroup>())
+            foreach (var l in Misc.FindObjectsOfType<LayoutGroup>())
             {
                 l.enabled = enabled;
             }

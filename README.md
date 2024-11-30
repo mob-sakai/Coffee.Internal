@@ -9,6 +9,8 @@ Used in development and demos for the following packages:
 - https://github.com/mob-sakai/ParticleEffectForUGUI
 - https://github.com/mob-sakai/SoftMaskForUGUI
 - https://github.com/mob-sakai/CompositeCanvasRenderer
+- https://github.com/mob-sakai/UIEffect
+- https://github.com/mob-sakai/UIPostProcessing
 
 ## Install Development Tools
 
@@ -19,6 +21,8 @@ Used in development and demos for the following packages:
   "dependencies": {
     "com.coffee.nano-monitor": "https://github.com/mob-sakai/Coffee.Internal.git?path=Packages/NanoMonitor",
     "com.coffee.development": "https://github.com/mob-sakai/Coffee.Internal.git?path=Packages/Development",
+    "com.coffee.open-sesame": "https://github.com/mob-sakai/Coffee.Internal.git?path=Packages/OpenSesame",
+    "com.coffee.minimal-resource": "https://github.com/mob-sakai/Coffee.Internal.git?path=Packages/MinimalResource",
     ...
   }
 }
@@ -29,6 +33,10 @@ Used in development and demos for the following packages:
 Zero-allocation stats monitor
 
 <img alt="Nano Monitor" src="https://github.com/mob-sakai/mob-sakai/assets/12690315/73536425-58dc-433f-a88e-37646849a7c1" width="500"/>
+
+### Open Sesame
+
+### Minimal Resource
 
 ### Development
 

@@ -68,13 +68,11 @@ namespace Coffee.NanoMonitor
             Right
         }
 
-
         //################################
         // Serialize Members.
         //################################
         [SerializeField] private Mode m_Mode = Mode.Text;
         [SerializeField] private TextAnchor m_TextAnchor;
-
 
         //################################
         // Private Members.
@@ -131,7 +129,6 @@ namespace Coffee.NanoMonitor
                 return offset;
             }
         }
-
 
         //################################
         // Unity Callbacks.

@@ -1,13 +1,15 @@
 using System;
 using System.IO;
-using System.Linq;
 using System.Reflection;
 using System.Text;
-using System.Text.RegularExpressions;
 using UnityEditor;
 using UnityEditor.Compilation;
 using UnityEngine;
 using Debug = UnityEngine.Debug;
+#if !UNITY_2021_2_OR_NEWER
+using System.Linq;
+using System.Text.RegularExpressions;
+#endif
 
 namespace Coffee.OpenSesame
 {
@@ -17,10 +19,7 @@ namespace Coffee.OpenSesame
         None = 0,
         Release = 1 << 0,
         XmlDoc = 1 << 1,
-        RefDll = 1 << 2,
-        Deterministic = 1 << 11,
-        Optimize = 1 << 12,
-        EnableAnalyzer = 1 << 20
+        RefDll = 1 << 2
     }
 
     public static class Compiler
@@ -30,7 +29,6 @@ namespace Coffee.OpenSesame
 #else
         private const string k_PackageId = "OpenSesame.Net.Compilers.4.0.1";
 #endif
-        private const RegexOptions k_RegexOpt = RegexOptions.Multiline | RegexOptions.Compiled;
 
         public static string GetResponseFilePath(string assemblyName)
         {
@@ -91,7 +89,6 @@ namespace Coffee.OpenSesame
         private static string ModifyResponseFile(string src, string outPath, CompileOptions options)
         {
             var dst = Path.Combine(Path.GetDirectoryName(src), $"mod_{Path.GetFileName(src)}");
-            var p = '-';
             using (var sw = new StreamWriter(dst, false, Encoding.UTF8))
             {
                 foreach (var line in File.ReadLines(src))
@@ -102,18 +99,15 @@ namespace Coffee.OpenSesame
                     switch (0 < colon ? line.Substring(1, colon - 1) : line.Substring(1))
                     {
                         case "out":
-                            p = line[0];
-                            sw.WriteLine($"{p}out:\"{outPath}\"");
+                            sw.WriteLine($"-out:\"{outPath}\"");
                             break;
-                        case "analyzer":
-                            if ((options & CompileOptions.EnableAnalyzer) != 0) sw.WriteLine(line);
-                            break;
+                        case "doc":
                         case "debug":
-                        case "additionalfile":
+                        case "analyzer":
+                        case "refout":
                         case "optimize":
                         case "optimize+":
                         case "optimize-":
-                        case "deterministic":
                             break;
                         default:
                             sw.WriteLine(line);
@@ -121,16 +115,24 @@ namespace Coffee.OpenSesame
                     }
                 }
 
-                if ((options & CompileOptions.Release) == 0)
-                    sw.WriteLine($"{p}debug:portable");
-                if ((options & CompileOptions.Optimize) != 0)
-                    sw.WriteLine($"{p}optimize");
-                if ((options & CompileOptions.Deterministic) != 0)
-                    sw.WriteLine($"{p}deterministic");
+                if ((options & CompileOptions.Release) != 0)
+                {
+                    sw.WriteLine("-optimize");
+                }
+                else
+                {
+                    sw.WriteLine("-debug:portable");
+                }
+
                 if ((options & CompileOptions.XmlDoc) != 0)
-                    sw.WriteLine($"{p}doc:\"{Path.ChangeExtension(outPath, ".xml")}\"");
+                {
+                    sw.WriteLine($"-doc:\"{Path.ChangeExtension(outPath, ".xml")}\"");
+                }
+
                 if ((options & CompileOptions.RefDll) != 0)
-                    sw.WriteLine($"{p}refout:\"{Path.ChangeExtension(outPath, ".ref.dll")}\"");
+                {
+                    sw.WriteLine($"-refout:\"{Path.ChangeExtension(outPath, ".ref.dll")}\"");
+                }
             }
 
             return dst;
@@ -159,8 +161,31 @@ namespace Coffee.OpenSesame
                 return;
             }
 
-            var modRsp = ModifyResponseFile(rsp, outPath, options);
+            var tmpOutPath = Path.Combine("Temp", outPath);
+            var tmpOutXmlPath = Path.ChangeExtension(tmpOutPath, ".xml");
+            var tmpOutPdbPath = Path.ChangeExtension(tmpOutPath, ".pdb");
+            var tmpOutRefPath = Path.ChangeExtension(tmpOutPath, ".ref.dll");
+
+            Utils.DeleteFile(tmpOutPath);
+            Utils.DeleteFile(tmpOutXmlPath);
+            Utils.DeleteFile(tmpOutPdbPath);
+            Utils.DeleteFile(tmpOutRefPath);
+
+            var tmpOutDir = Path.GetDirectoryName(tmpOutPath);
+            if (!string.IsNullOrEmpty(tmpOutDir) && !Directory.Exists(tmpOutDir))
+            {
+                Directory.CreateDirectory(tmpOutDir);
+            }
+
+            var modRsp = ModifyResponseFile(rsp, tmpOutPath, options);
             Utils.ExecuteCommand(runtime, $"{compilerInfo.path} /noconfig @{modRsp}");
+
+            AssetDatabase.StartAssetEditing();
+            Utils.CopyFileIfNeeded(tmpOutPath, outPath);
+            Utils.CopyFileIfNeeded(tmpOutXmlPath, Path.ChangeExtension(outPath, ".xml"));
+            Utils.CopyFileIfNeeded(tmpOutPdbPath, Path.ChangeExtension(outPath, ".pdb"));
+            Utils.CopyFileIfNeeded(tmpOutRefPath, Path.ChangeExtension(outPath, ".ref.dll"));
+            AssetDatabase.StopAssetEditing();
         }
     }
 }

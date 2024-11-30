@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Net;
+using System.Security.Cryptography;
 using System.Threading;
 using UnityEditor;
 using UnityEngine;
@@ -177,6 +179,47 @@ namespace Coffee.OpenSesame
             }
 
             return (p.ExitCode, p.StandardOutput.ReadToEnd());
+        }
+
+        public static void CopyFileIfNeeded(string src, string dst)
+        {
+            src = Path.GetFullPath(src);
+            if (!File.Exists(src))
+            {
+                return;
+            }
+
+            dst = Path.GetFullPath(dst);
+            if (File.Exists(dst))
+            {
+                using (var srcFs = new FileStream(src, FileMode.Open))
+                using (var dstFs = new FileStream(dst, FileMode.Open))
+                using (var md5 = new MD5CryptoServiceProvider())
+                {
+                    if (md5.ComputeHash(srcFs).SequenceEqual(md5.ComputeHash(dstFs)))
+                    {
+                        Debug.Log($"Skip copy file (same hash): {dst}");
+                        return;
+                    }
+                }
+            }
+
+            var dir = Path.GetDirectoryName(dst);
+            if (!string.IsNullOrEmpty(dir) && !Directory.Exists(dir))
+            {
+                Directory.CreateDirectory(dir);
+            }
+
+            File.Copy(src, dst, true);
+            AssetDatabase.ImportAsset(dst, ImportAssetOptions.ForceUpdate);
+        }
+
+        public static void DeleteFile(string path)
+        {
+            if (!string.IsNullOrEmpty(path) && File.Exists(path))
+            {
+                File.Delete(path);
+            }
         }
     }
 }

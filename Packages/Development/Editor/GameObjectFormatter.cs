@@ -99,7 +99,7 @@ namespace Coffee.Development
         [MenuItem("Development/Format GameObject Names", false, 1)]
         private static void FormatGameObjectNames()
         {
-            Object.FindObjectsOfType<GameObject>()
+            Misc.FindObjectsOfType<GameObject>()
                 .ToList()
                 .ForEach(go => s_Formatters.FirstOrDefault(p => p.Invoke(go)));
         }

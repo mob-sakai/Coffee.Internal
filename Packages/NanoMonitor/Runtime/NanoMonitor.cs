@@ -64,6 +64,7 @@ namespace Coffee.NanoMonitor
         private bool _isOpened = true;
         private MonitorUI _switchText;
         private int _width = 750;
+        private string _helpUrl;
 
         public static float gpuMemory => (Profiler.GetAllocatedMemoryForGraphicsDriver() >> 10) / 1024f;
         public static float unityUsed => (Profiler.GetTotalAllocatedMemoryLong() >> 10) / 1024f;
@@ -170,7 +171,6 @@ namespace Coffee.NanoMonitor
             Profiler.EndSample();
         }
 
-
         public void SetVisibleOpenObject(bool isOpen)
         {
             Profiler.BeginSample("(NM)[NanoMonitor] Open");
@@ -200,6 +200,11 @@ namespace Coffee.NanoMonitor
         {
             Resources.UnloadUnusedAssets();
             GC.Collect(0);
+        }
+
+        public void OpenUrl()
+        {
+            Application.OpenURL(_helpUrl);
         }
 
         public void ChangeTargetFps()
@@ -234,12 +239,29 @@ namespace Coffee.NanoMonitor
             }
         }
 
-        public void SetUp(Image.OriginVertical anchor, float interval, CustomMonitorItem[] customs, int width)
+        public void SetAnchor(Image.OriginVertical anchor)
         {
             _anchor = anchor;
+        }
+
+        public void SetInteraval(float interval)
+        {
             _interval = interval;
-            _customMonitorItems = customs;
+        }
+
+        public void SetWidth(int width)
+        {
             _width = width;
+        }
+
+        public void SetHelpUrl(string helpUrl)
+        {
+            _helpUrl = helpUrl;
+        }
+
+        public void SetCustomItems(CustomMonitorItem[] customs)
+        {
+            _customMonitorItems = customs;
         }
     }
 }

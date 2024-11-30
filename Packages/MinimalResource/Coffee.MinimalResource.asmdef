@@ -1,9 +1,7 @@
 {
-    "name": "Coffee.Development.Editor",
+    "name": "Coffee.MinimalResource",
     "rootNamespace": "",
-    "references": [
-        "Coffee.Development"
-    ],
+    "references": [],
     "includePlatforms": [
         "Editor"
     ],

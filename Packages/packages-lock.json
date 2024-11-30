@@ -12,6 +12,12 @@
       "source": "embedded",
       "dependencies": {}
     },
+    "com.coffee.minimal-resource": {
+      "version": "file:MinimalResource",
+      "depth": 0,
+      "source": "embedded",
+      "dependencies": {}
+    },
     "com.coffee.nano-monitor": {
       "version": "file:NanoMonitor",
       "depth": 0,
@@ -19,6 +25,12 @@
       "dependencies": {
         "com.unity.ugui": "1.0.0"
       }
+    },
+    "com.coffee.open-sesame": {
+      "version": "file:OpenSesame",
+      "depth": 0,
+      "source": "embedded",
+      "dependencies": {}
     },
     "com.unity.ext.nunit": {
       "version": "1.0.6",
@@ -28,7 +40,7 @@
       "url": "https://packages.unity.com"
     },
     "com.unity.ide.rider": {
-      "version": "3.0.28",
+      "version": "3.0.34",
       "depth": 0,
       "source": "registry",
       "dependencies": {

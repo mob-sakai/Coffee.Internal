@@ -1,0 +1,5 @@
+-target:library
+-resource:"_"
+-optimize
+-deterministic
+"AssemblyInfo.cs"

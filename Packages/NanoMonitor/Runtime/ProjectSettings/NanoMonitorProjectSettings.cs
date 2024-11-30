@@ -15,6 +15,8 @@ namespace Coffee.NanoMonitor
 {
     public class NanoMonitorProjectSettings : PreloadedProjectSettings<NanoMonitorProjectSettings>
     {
+        private const string k_PrefabGuid = "7cebff2d255b9433cbe23b243c193329";
+
         [Header("Condition")]
         [SerializeField]
         private bool m_NanoMonitorEnabled = true;
@@ -23,20 +25,20 @@ namespace Coffee.NanoMonitor
         private string m_BootSceneNameRegex = ".*";
 
         [SerializeField]
-        private bool m_DevelopmentBuildOnly = true;
+        private bool m_DevelopmentBuildOnly = false;
 
         [SerializeField]
         private bool m_EnabledInEditor = true;
 
         [SerializeField]
-        private bool m_AlwaysIncludeAssembly = true;
+        private bool m_AlwaysIncludeAssembly = false;
 
         [SerializeField]
         private bool m_InstantiateOnLoad = true;
 
         [Header("Settings")]
         [SerializeField]
-        private GameObject m_Prefab;
+        private NanoMonitor m_Prefab;
 
         [SerializeField]
         [Range(0.01f, 2f)]
@@ -46,8 +48,11 @@ namespace Coffee.NanoMonitor
         private Image.OriginVertical m_Anchor = Image.OriginVertical.Top;
 
         [SerializeField]
-        [Range(750, 1000)]
-        private int m_Width = 750;
+        [Range(800, 1000)]
+        private int m_Width = 800;
+
+        [SerializeField]
+        private string m_HelpUrl = "https://github.com/mob-sakai/Coffee.Internal";
 
         [HideInInspector]
         [SerializeField]
@@ -80,7 +85,12 @@ namespace Coffee.NanoMonitor
             if (!instance.m_Prefab) return;
 
             var go = Instantiate(instance.m_Prefab);
-            go.GetComponent<NanoMonitor>().SetUp(m_Anchor, m_Interval, m_CustomMonitorItems, m_Width);
+            var monitor = go.GetComponent<NanoMonitor>();
+            monitor.SetAnchor(m_Anchor);
+            monitor.SetInteraval(m_Interval);
+            monitor.SetCustomItems(m_CustomMonitorItems);
+            monitor.SetWidth(m_Width);
+            monitor.SetHelpUrl(m_HelpUrl);
             DontDestroyOnLoad(go);
         }
 
@@ -120,25 +130,7 @@ namespace Coffee.NanoMonitor
 #if UNITY_EDITOR
         protected void Reset()
         {
-            m_Prefab = AssetDatabase.FindAssets("t:prefab NanoMonitor")
-                .Select(AssetDatabase.GUIDToAssetPath)
-                .Where(x => x != "Assets/NanoMonitorLink/NanoMonitor.prefab")
-                .Select(AssetDatabase.LoadAssetAtPath<GameObject>)
-                .FirstOrDefault(x => x.TryGetComponent<NanoMonitor>(out _));
-
-            if (m_Prefab) return;
-
-            if (!AssetDatabase.IsValidFolder("Assets/ProjectSettings"))
-            {
-                AssetDatabase.CreateFolder("Assets", "ProjectSettings");
-            }
-
-            var assetPath = "Assets/ProjectSettings/NanoMonitor.prefab";
-            assetPath = AssetDatabase.GenerateUniqueAssetPath(assetPath);
-            FileUtil.CopyFileOrDirectory("Packages/com.coffee.nano-monitor/Prefabs~/NanoMonitor.prefab", assetPath);
-            AssetDatabase.ImportAsset(assetPath);
-            m_Prefab = AssetDatabase.LoadAssetAtPath<GameObject>(assetPath);
-            EditorUtility.SetDirty(this);
+            m_Prefab = AssetDatabase.LoadAssetAtPath<NanoMonitor>(AssetDatabase.GUIDToAssetPath(k_PrefabGuid));
         }
 
         private static string GetBootSceneName()

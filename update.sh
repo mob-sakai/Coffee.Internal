@@ -40,6 +40,13 @@ do
     sed -f "$sed_replace" "$src/$dir/$f" > "$dst/$dir/$f"
     echo "  -> $f"
   done
+
+  # find "$dst/$dir/" -type f -name "*.dll" | sed -f "$sed_replace" | xargs -n2 mv
+  for f in $(cd "$src/$dir";find . -maxdepth 1 -type f -name "*.dll"); do
+    echo "$f" | sed -f "$sed_replace" | xargs -I{} cp "$src/$dir/$f" "$dst/$dir/{}"
+    echo "  -> $f"
+  done
+
 done
 
 echo '==== Complete ===='

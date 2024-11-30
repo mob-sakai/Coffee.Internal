@@ -10,7 +10,7 @@
   "changelogUrl": "https://mob-sakai.github.io/UpmPackageDevelopment/changelog/CHANGELOG.html",
   "repository": {
     "type": "git",
-    "url": "https://github.com/mob-sakai/UpmPackageDevelopment.git",
+    "url": "https://github.com/mob-sakai/Coffee.Internal.git",
     "directory": "Packages/src"
   },
   "author": {
