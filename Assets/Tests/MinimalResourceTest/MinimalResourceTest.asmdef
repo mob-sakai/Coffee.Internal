@@ -14,5 +14,7 @@
     "overrideReferences": false,
     "precompiledReferences": [],
     "autoReferenced": false,
-    "defineConstraints": []
+    "defineConstraints": [
+        "!UNITY_2020_1"
+    ]
 }
