@@ -9,17 +9,18 @@ env:
   # MINIMUM_VERSION: The minimum version of Unity.
   MINIMUM_VERSION: 2019.4
   # EXCLUDE_FILTER: The excluded versions of Unity.
-  EXCLUDE_FILTER: "(2020.2.0|2021.1|2023.3)"
+  EXCLUDE_FILTER: '(2020.2.0|2023.3)'
 
 on:
   workflow_dispatch:
     inputs:
       usePeriodVersions:
-        description: "Use the period versions (.0f1, .10f1, 20f1, ...)."
+        description: 'Use the period versions (.0f1, .10f1, 20f1, ...).'
         required: false
-        default: "true"
+        default: 'true'
   push:
     branches:
+      - main
       - develop
       - develop-preview
     tags:
