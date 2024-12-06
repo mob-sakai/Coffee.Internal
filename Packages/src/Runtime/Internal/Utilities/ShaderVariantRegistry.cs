@@ -126,7 +126,7 @@ namespace Coffee.Internal
                     {
                         return File.ReadLines(x.path)
                             .Take(10)
-                            .Where(line => line.Contains(optionalName) && Regex.IsMatch(line, @"//\s*OptionalShader"))
+                            .Where(line => line.Contains($"OptionalShader@{optionalName}"))
                             .Select(line => Regex.Match(line, @":\s*(.*)$"))
                             .Where(match => match.Success)
                             .Select(match => new StringPair() { key = match.Groups[1].Value, value = x.name });
