@@ -1,6 +1,8 @@
 {
     "name": "EditorTests",
-    "references": [],
+    "references": [
+        "Coffee.Internal.Runtime"
+    ],
     "optionalUnityReferences": [
         "TestAssemblies"
     ],

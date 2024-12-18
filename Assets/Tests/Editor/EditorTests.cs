@@ -1,14 +1,27 @@
 using System.Collections;
+using Coffee.Internal;
 using NUnit.Framework;
+using UnityEditor;
+using UnityEngine;
 using UnityEngine.TestTools;
 
 public class EditorTests
 {
-    // A Test behaves as an ordinary method
     [Test]
-    public void NewTestScriptSimplePasses()
+    public void GetActualTexture()
     {
-        // Use the Assert class to test conditions
+        var sprite = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Tests/Editor/TestSprite.png");
+        var texture = sprite.GetActualTexture();
+        Debug.Log(texture);
+    }
+
+    [Test]
+    public void GetActiveAtlas()
+    {
+        var sprite = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Tests/Editor/TestSpriteAtlas.png");
+        var spriteAtlas = sprite.GetActiveAtlas();
+        Debug.Log(spriteAtlas);
+
     }
 
     // A UnityTest behaves like a coroutine in Play Mode. In Edit Mode you can use
