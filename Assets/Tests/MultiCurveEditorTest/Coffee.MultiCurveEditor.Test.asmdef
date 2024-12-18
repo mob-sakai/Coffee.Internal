@@ -1,16 +1,15 @@
 {
     "name": "Coffee.MultiCurveEditor.Test",
-    "rootNamespace": "",
-    "references": [
-        "GUID:4a38b327cb2f44055b9072efc89bc5df"
-    ],
+    "references": [],
     "includePlatforms": [
         "Editor"
     ],
     "excludePlatforms": [],
     "allowUnsafeCode": false,
-    "overrideReferences": false,
-    "precompiledReferences": [],
+    "overrideReferences": true,
+    "precompiledReferences": [
+        "Coffee.MultiCurveEditor.dll"
+    ],
     "autoReferenced": false,
     "defineConstraints": [],
     "versionDefines": [],

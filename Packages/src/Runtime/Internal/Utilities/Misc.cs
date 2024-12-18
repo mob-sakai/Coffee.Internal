@@ -64,10 +64,8 @@ namespace Coffee.Internal
 #if UNITY_EDITOR
         public static T[] GetAllComponentsInPrefabStage<T>() where T : Component
         {
-            if (!PrefabStageUtility.GetCurrentPrefabStage()) return Array.Empty<T>();
-
             var prefabStage = PrefabStageUtility.GetCurrentPrefabStage();
-            if (!prefabStage) return Array.Empty<T>();
+            if (prefabStage == null) return Array.Empty<T>();
 
             return prefabStage.prefabContentsRoot.GetComponentsInChildren<T>(true);
         }
