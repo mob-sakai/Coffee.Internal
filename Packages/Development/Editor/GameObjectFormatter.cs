@@ -3,7 +3,9 @@ using System.Linq;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.UI;
-using Object = UnityEngine.Object;
+#if TMP_ENABLE
+using TMPro;
+#endif
 
 namespace Coffee.Development
 {
@@ -11,92 +13,118 @@ namespace Coffee.Development
     {
         private static readonly Func<GameObject, bool>[] s_Formatters = new Func<GameObject, bool>[]
         {
-            // TITLE/SUBTITLE
+            // TITLE
+            // - Change parent name to "{TITLE}"
             go =>
             {
-                if (go.name != "TITLE" && go.name != "SUBTITLE") return false;
+                if (go.name != "TITLE") return false;
 
-                var text = go.GetComponent<Text>();
-                if (text)
+                var label = GetLabel(go);
+                if (!string.IsNullOrEmpty(label))
                 {
-                    text.fontSize = 26;
-                    var rt = text.transform as RectTransform;
-                    rt.sizeDelta = new Vector2(rt.sizeDelta.x, 30);
-
-                    if (go.name == "TITLE")
-                    {
-                        go.transform.parent.name = text.text;
-                    }
+                    go.transform.parent.name = label;
                 }
 
                 return true;
             },
 
             // Selectable
+            // - Change name to "{SelectableType}" or "{SelectableType} - {LABEL}"
             go =>
             {
                 var selectable = go.GetComponent<Selectable>();
                 if (!selectable) return false;
 
                 go.name = selectable.GetType().Name;
-                var text = selectable.GetComponentInChildren<Text>(true);
-                if (text)
+
+                var label = GetLabel(selectable.transform.Find("LABEL"));
+                if (!string.IsNullOrEmpty(label))
                 {
-                    go.name += $" - {text.text}";
+                    go.name += $" - {label}";
                 }
 
                 return true;
             },
 
-            // Mask
-            go =>
-            {
-                var mask = go.GetComponent<Mask>();
-                if (!mask) return false;
-
-                go.name = mask.GetType().Name;
-                return true;
-            },
-
             // Controls
+            // - Change name to "Controls" or "Controls - {LABEL}"
             go =>
             {
                 if (!go.name.StartsWith("Controls")) return false;
 
                 go.name = "Controls";
-                var text = go.transform.Find("Label")?.GetComponent<Text>();
-                if (text)
-                {
-                    go.name += $" - {text.text}";
-                }
 
-                foreach (var childText in go.GetComponentsInChildren<Text>(true))
+                var label = GetLabel(go.transform.Find("LABEL"));
+                if (!string.IsNullOrEmpty(label))
                 {
-                    childText.fontSize = 20;
-                    var outline = childText.GetComponent<Outline>() ?? childText.gameObject.AddComponent<Outline>();
-                    outline.effectDistance = new Vector2(1, -1);
-                    outline.effectColor = new Color(0, 0, 0, 0.5f);
+                    go.name += $" - {label}";
                 }
 
                 return true;
             },
 
             // Label
+            // - Change name to "LABEL"
             go =>
             {
-                if (go.name.StartsWith("Label")) return false;
-
-                var text = go.GetComponent<Text>();
-                if (text)
+                if (go.TryGetComponent<Text>(out var _))
                 {
-                    go.name = "Label";
+                    go.name = "LABEL";
+                    return true;
+                }
+
+#if TMP_ENABLE
+                if (go.TryGetComponent<TextMeshProUGUI>(out var _))
+                {
+                    go.name = "LABEL";
+                    return true;
+                }
+#endif
+
+                return false;
+            },
+
+            // Layout
+            // - Change name to "{LayoutType}"
+            go =>
+            {
+                if (go.transform.Find("TITLE")) return false;
+
+                if (go.TryGetComponent<LayoutGroup>(out var layoutGroup))
+                {
+                    go.name = layoutGroup.GetType().Name;
                 }
 
                 return true;
             }
         };
 
-        [MenuItem("Development/Format GameObject Names", false, 1)]
+        private static string GetLabel(Component c)
+        {
+            if (c == null) return null;
+
+            return GetLabel(c.gameObject);
+        }
+
+        private static string GetLabel(GameObject go)
+        {
+            if (go == null) return null;
+
+            if (go.TryGetComponent<Text>(out var text))
+            {
+                return text.text.Replace('\n', ' ');
+            }
+
+#if TMP_ENABLE
+            if (go.TryGetComponent<TextMeshProUGUI>(out var tmp))
+            {
+                return tmp.text.Replace('\n', ' ');
+            }
+#endif
+            return null;
+        }
+
+        [MenuItem("Development/Format GameObject Names In Scene", false, 1)]
         private static void FormatGameObjectNames()
         {
             Misc.FindObjectsOfType<GameObject>()
