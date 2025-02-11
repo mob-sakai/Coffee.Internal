@@ -1,3 +1,4 @@
+#if UGUI_ENABLE
 using System;
 using System.Linq;
 using UnityEditor;
@@ -133,3 +134,4 @@ namespace Coffee.Development
         }
     }
 }
+#endif

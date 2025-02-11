@@ -1,3 +1,4 @@
+#if UGUI_ENABLE
 using UnityEditor;
 using UnityEngine.UI;
 using Object = UnityEngine.Object;
@@ -27,3 +28,4 @@ namespace Coffee.Development
         }
     }
 }
+#endif
