@@ -15,6 +15,7 @@ namespace Coffee.Internal
         private static (string shaderName, string sampleName, string version)[] s_Samples;
         private static (string guid, string fileName)[] s_DeprecatedShaders;
         private static readonly Dictionary<string, string> s_SampleNames = new Dictionary<string, string>();
+        private static readonly Dictionary<string, string> s_ShaderAliases = new Dictionary<string, string>();
 
         public static void RegisterShaderSamples((string shaderName, string sampleName, string version)[] samples)
         {
@@ -25,6 +26,14 @@ namespace Coffee.Internal
             foreach (var (shaderName, sampleName, _) in samples)
             {
                 s_SampleNames[shaderName] = sampleName;
+            }
+        }
+
+        public static void RegisterShaderAliases((string, string)[] aliases)
+        {
+            foreach (var (from, to) in aliases)
+            {
+                s_ShaderAliases[from] = to;
             }
         }
 
@@ -43,6 +52,11 @@ namespace Coffee.Internal
         public static bool ImportShaderIfSelected(string shaderName)
         {
             if (IsBatchOrBuilding()) return false;
+
+            if (s_ShaderAliases.TryGetValue(shaderName, out var alias))
+            {
+                shaderName = alias;
+            }
 
             // Find sample name.
             if (s_SampleNames.TryGetValue(shaderName, out var sampleName))

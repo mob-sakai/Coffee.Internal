@@ -78,16 +78,16 @@ namespace Coffee.Internal
                 return Shader.Find(optionalShaderName);
             }
 
-            // The shader has
-            if (shader.name.Contains(requiredName))
+            // The shader has required name.
+            var shaderName = shader.name;
+            if (shaderName.Contains(requiredName))
             {
-                _cachedOptionalShaders[id] = shader.name;
+                _cachedOptionalShaders[id] = shaderName;
                 return shader;
             }
 
             // Find optional shader.
             Shader optionalShader;
-            var shaderName = shader.name;
             foreach (var pair in m_OptionalShaders)
             {
                 if (pair.key != shaderName) continue;
@@ -100,7 +100,7 @@ namespace Coffee.Internal
             }
 
             // Find optional shader by format.
-            optionalShaderName = string.Format(format, shader.name);
+            optionalShaderName = string.Format(format, shaderName);
             optionalShader = Shader.Find(optionalShaderName);
             if (optionalShader)
             {
@@ -111,7 +111,6 @@ namespace Coffee.Internal
 #if UNITY_EDITOR
             if (onShaderRequested?.Invoke(optionalShaderName) ?? false)
             {
-                _cachedOptionalShaders[id] = optionalShaderName;
                 return Shader.Find(defaultOptionalShaderName);
             }
 #endif
@@ -174,9 +173,6 @@ namespace Coffee.Internal
                 var shaderName = shader.name;
                 foreach (var key in keys)
                 {
-                    // Find key shader.
-                    if (!Shader.Find(key)) continue;
-
                     m_OptionalShaders.Add(new StringPair() { key = key, value = shaderName });
                 }
 
