@@ -8,10 +8,10 @@
             {
                 "m_SrcAssembly": {
                     "fileID": 5897886265953266890,
-                    "guid": "4a38b327cb2f44055b9072efc89bc5df",
+                    "guid": "13f09b20504514bbaae912d5e96573ba",
                     "type": 3
                 },
-                "m_DstAssemblyPath": "Assets/MultiCurveEditor/Coffee.MultiCurveEditor.dll",
+                "m_DstAssemblyPath": "Packages/com.coffee.symbolic-linker/Coffee.SymbolicLink.dll",
                 "m_Options": 1
             }
         ]

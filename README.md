@@ -23,6 +23,7 @@ Used in development and demos for the following packages:
     "com.coffee.development": "https://github.com/mob-sakai/Coffee.Internal.git?path=Packages/Development",
     "com.coffee.open-sesame": "https://github.com/mob-sakai/Coffee.Internal.git?path=Packages/OpenSesame",
     "com.coffee.minimal-resource": "https://github.com/mob-sakai/Coffee.Internal.git?path=Packages/MinimalResource",
+    "com.coffee.symbolic-linker": "https://github.com/mob-sakai/Coffee.Internal.git?path=Packages/SymbolicLinker",
     ...
   }
 }

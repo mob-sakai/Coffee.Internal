@@ -1,0 +1,20 @@
+{
+    "MonoBehaviour": {
+        "m_Enabled": true,
+        "m_EditorHideFlags": 0,
+        "m_Name": "",
+        "m_EditorClassIdentifier": "",
+        "m_SymbolicLinks": [
+            {
+                "m_From": "Assets/SymbolicLinkerSamples",
+                "m_To": "../Packages/SymbolicLinkerSample/Samples~",
+                "m_Define": "!UNITY_2020_1_OR_NEWER"
+            },
+            {
+                "m_From": "Assets/SymbolicLinkerSamples2",
+                "m_To": "../Packages/SymbolicLinkerSample/Samples2~",
+                "m_Define": "UNITY_2020_1_OR_NEWER"
+            }
+        ]
+    }
+}
