@@ -111,20 +111,22 @@ namespace Coffee.SymbolicLinker
 
             p.Exited += (_, __) =>
             {
-                var result = new StringBuilder();
-                var stdout = p.StandardOutput.ReadToEnd();
-                result.AppendLine($"code: {p.ExitCode}");
-                result.Append("stdout: ");
-                result.Append(stdout);
-                result.AppendLine();
-                result.Append("stderr: ");
-                result.Append(p.StandardError.ReadToEnd());
-                Debug.Log(result);
-
                 if (p.ExitCode == 0)
                 {
                     Debug.Log($"[SymbolicLink] Create: {to} -> {from}");
                     AssetDatabase.ImportAsset(from, ImportAssetOptions.ImportRecursive);
+                }
+                else
+                {
+                    var result = new StringBuilder();
+                    var stdout = p.StandardOutput.ReadToEnd();
+                    result.AppendLine($"code: {p.ExitCode}");
+                    result.Append("stdout: ");
+                    result.Append(stdout);
+                    result.AppendLine();
+                    result.Append("stderr: ");
+                    result.Append(p.StandardError.ReadToEnd());
+                    Debug.Log(result);
                 }
             };
 
