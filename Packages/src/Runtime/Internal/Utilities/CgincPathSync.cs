@@ -40,7 +40,7 @@ namespace Coffee.Internal
                     .Any(x => Regex.IsMatch(x.message, $"Couldn't open include file.*{s_CgincPattern}"));
                 if (!hasCgincError) continue;
 
-                cgincs ??= AssetDatabase.FindAssets("t:ShaderInclude")
+                cgincs = cgincs ?? AssetDatabase.FindAssets("t:ShaderInclude")
                     .Select(AssetDatabase.GUIDToAssetPath)
                     .Where(x => Regex.IsMatch(x, s_CgincPattern))
                     .ToArray();
