@@ -85,20 +85,20 @@ namespace Coffee.SymbolicLinker
             if (string.IsNullOrEmpty(from) || string.IsNullOrEmpty(to)) return;
 
 #if UNITY_EDITOR_WIN
-            var bash = @"C:\Program Files\Git\bin\bash.exe";
-            if (!File.Exists(bash))
-            {
-                bash = @"C:\Program Files (x86)\Git\bin\bash.exe";
-            }
+            var bash = "CMD.exe";
+            from = Path.GetFullPath(from, Path.GetFullPath($"{Application.dataPath}/.."));
+            to = Path.GetFullPath(to, Path.GetDirectoryName(from));
+            var args = $"/C mklink /J \"{from}\" \"{to}\"";
 #else
             var bash = "/bin/bash";
+            var args =$"-c \"ln -s -f '{to}' Temp && mv 'Temp/{Path.GetFileName(to)}' '{from}'\"";
 #endif
 
             var p = new Process()
             {
                 StartInfo = new ProcessStartInfo()
                 {
-                    Arguments = $"-c \"ln -s -f '{to}' Temp && mv 'Temp/{Path.GetFileName(to)}' '{from}'\"",
+                    Arguments = args,
                     CreateNoWindow = true,
                     FileName = bash,
                     RedirectStandardError = true,
