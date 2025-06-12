@@ -92,11 +92,11 @@ jobs:
       - name: 📥 Cache library
         uses: actions/cache@v4
         with:
-          path: Library
-          key: Library-${{ matrix.unityVersion }}-${{ github.event.pull_request.head.sha || github.sha }}
+          path: ${{ env.PROJECT_PATH }}/Library
+          key: ${{ env.PROJECT_PATH }}-Library-${{ matrix.unityVersion }}-${{ github.event.pull_request.head.sha || github.sha }}
           restore-keys: |
-            Library-${{ matrix.unityVersion }}-
-            Library-
+            ${{ env.PROJECT_PATH }}-Library-${{ matrix.unityVersion }}-
+            ${{ env.PROJECT_PATH }}-Library-
 
       - name: 🛠️ Build Unity Project (Test)
         uses: game-ci/unity-builder@v4
