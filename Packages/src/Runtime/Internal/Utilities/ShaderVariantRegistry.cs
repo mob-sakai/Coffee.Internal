@@ -17,7 +17,7 @@ using Object = UnityEngine.Object;
 namespace Coffee.Internal
 {
     [Serializable]
-    public class ShaderVariantRegistry
+    public sealed class ShaderVariantRegistry
     {
         [Serializable]
         internal class StringPair : IEquatable<StringPair>
@@ -27,9 +27,7 @@ namespace Coffee.Internal
 
             public bool Equals(StringPair other)
             {
-                if (other == null) return false;
-                if (ReferenceEquals(this, other)) return true;
-                return key == other.key && value == other.value;
+                return other != null && key == other.key && value == other.value;
             }
 
             public override bool Equals(object obj)
@@ -89,15 +87,15 @@ namespace Coffee.Internal
 
             // Find optional shader.
             Shader optionalShader;
-            foreach (var pair in m_OptionalShaders)
+            var count = m_OptionalShaders.Count;
+            for (var i = 0; i < count; i++)
             {
+                var pair = m_OptionalShaders[i];
                 if (pair.key != shaderName) continue;
                 optionalShader = Shader.Find(pair.value);
-                if (optionalShader)
-                {
-                    _cachedOptionalShaders[id] = pair.value;
-                    return optionalShader;
-                }
+                if (!optionalShader) continue;
+                _cachedOptionalShaders[id] = pair.value;
+                return optionalShader;
             }
 
             // Find optional shader by format.
@@ -272,7 +270,7 @@ namespace Coffee.Internal
                 _sb.Length--; // Remove last space.
             }
 
-            var hash = new Hash128((uint)shader.GetInstanceID(), (uint)_sb.GetHashCode(), 0, 0);
+            var hash = new Hash128((uint)shader.GetInstanceID(), (uint)GetContentsHash(_sb), 0, 0);
             if (_cachedVariants.TryGetValue(hash, out var result))
             {
                 Profiler.EndSample();
@@ -289,6 +287,17 @@ namespace Coffee.Internal
             _cachedVariants.Add(hash, (variant, pair));
             Profiler.EndSample();
             return (variant, pair);
+        }
+
+        private static int GetContentsHash(StringBuilder sb)
+        {
+            var hash = 17;
+            for (var i = 0; i < sb.Length; i++)
+            {
+                hash = unchecked(hash * 31 + sb[i]);
+            }
+
+            return hash;
         }
 #endif
     }
