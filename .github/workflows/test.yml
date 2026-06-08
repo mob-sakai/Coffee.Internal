@@ -46,9 +46,9 @@ jobs:
         id: setup
         run: |
           echo "==== Target Unity Versions ===="
-          LATEST_VERSIONS=`npx unity-changeset@latest list --versions --latest-patch --min ${MINIMUM_VERSION} --json --all`
+          LATEST_VERSIONS=`npx unity-changeset@latest list --versions --latest-patch --min ${MINIMUM_VERSION} --json --all --ignore-alpha`
           if [ "${{ inputs.usePeriodVersions }}" = "true" ]; then
-            ADDITIONAL_VERSIONS=`npx unity-changeset list --versions --grep '0f' --min ${MINIMUM_VERSION} --json`
+            ADDITIONAL_VERSIONS=`npx unity-changeset list --versions --grep '0f' --min ${MINIMUM_VERSION} --json --ignore-alpha`
           else
             ADDITIONAL_VERSIONS=[]
           fi
