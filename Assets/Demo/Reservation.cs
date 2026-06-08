@@ -14,7 +14,7 @@ namespace Coffee.Internal
                 var e = m_Entries[i];
                 var size = new Vector2Int(e.m_Size, e.m_Size);
                 size = RenderTextureRepository.GetPreferSize(size, e.m_Rate);
-                var hash = new Hash128((uint)GetInstanceID(), (uint)size.x, (uint)size.y, 0);
+                var hash = new Hash128((uint)GetHashCode(), (uint)size.x, (uint)size.y, 0);
                 RenderTextureRepository.Get(hash, ref e.rt,
                     x => new RenderTexture(RenderTextureRepository.GetDescriptor(x, false)), size);
             }

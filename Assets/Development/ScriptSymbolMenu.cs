@@ -1,5 +1,8 @@
 using System.Linq;
 using UnityEditor;
+#if UNITY_6000_3_OR_NEWER
+using UnityEditor.Build;
+#endif
 
 namespace Coffee.InternalEditor
 {
@@ -23,13 +26,23 @@ namespace Coffee.InternalEditor
 
         private static string[] GetSymbols()
         {
+#if UNITY_6000_3_OR_NEWER
+            var namedTarget = NamedBuildTarget.FromBuildTargetGroup(EditorUserBuildSettings.selectedBuildTargetGroup);
+            return PlayerSettings.GetScriptingDefineSymbols(namedTarget)
+#else
             return PlayerSettings.GetScriptingDefineSymbolsForGroup(EditorUserBuildSettings.selectedBuildTargetGroup)
+#endif
                 .Split(';', ',');
         }
 
         private static void SetSymbols(string[] symbols)
         {
-            PlayerSettings.SetScriptingDefineSymbolsForGroup(EditorUserBuildSettings.selectedBuildTargetGroup,
+#if UNITY_6000_3_OR_NEWER
+            var namedTarget = NamedBuildTarget.FromBuildTargetGroup(EditorUserBuildSettings.selectedBuildTargetGroup);
+            PlayerSettings.SetScriptingDefineSymbols(namedTarget,
+#else
+            PlayerSettings.GetScriptingDefineSymbolsForGroup(EditorUserBuildSettings.selectedBuildTargetGroup,
+#endif
                 string.Join(";", symbols));
         }
 
