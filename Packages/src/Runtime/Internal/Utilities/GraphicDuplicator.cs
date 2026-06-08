@@ -35,7 +35,7 @@ namespace Coffee.Internal
             src.FillMesh(dst);
             dst.RecalculateBounds();
             Profiler.EndSample();
-            Logging.Log(nameof(GraphicDuplicator), " >>>> Graphic mesh is copied.");
+            Logger.Log(nameof(GraphicDuplicator), " >>>> Graphic mesh is copied.");
         }
 
         public static void CopyMesh(Mesh src, Mesh dst)
@@ -45,7 +45,7 @@ namespace Coffee.Internal
             Profiler.BeginSample("(COF)[GraphicDuplicator] CopyMesh");
             src.CopyTo(dst);
             Profiler.EndSample();
-            Logging.Log(nameof(GraphicDuplicator), " >>>> Graphic mesh is copied.");
+            Logger.Log(nameof(GraphicDuplicator), " >>>> Graphic mesh is copied.");
         }
     }
 }
