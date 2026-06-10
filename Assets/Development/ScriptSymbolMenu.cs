@@ -41,7 +41,7 @@ namespace Coffee.InternalEditor
             var namedTarget = NamedBuildTarget.FromBuildTargetGroup(EditorUserBuildSettings.selectedBuildTargetGroup);
             PlayerSettings.SetScriptingDefineSymbols(namedTarget,
 #else
-            PlayerSettings.GetScriptingDefineSymbolsForGroup(EditorUserBuildSettings.selectedBuildTargetGroup,
+            PlayerSettings.SetScriptingDefineSymbolsForGroup(EditorUserBuildSettings.selectedBuildTargetGroup,
 #endif
                 string.Join(";", symbols));
         }
