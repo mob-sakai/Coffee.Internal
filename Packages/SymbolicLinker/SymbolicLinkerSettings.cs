@@ -91,7 +91,7 @@ namespace Coffee.SymbolicLinker
             var args = $"/C mklink /J \"{from}\" \"{to}\"";
 #else
             var bash = "/bin/bash";
-            var args =$"-c \"ln -s -f '{to}' Temp && mv 'Temp/{Path.GetFileName(to)}' '{from}'\"";
+            var args = $"-c \"ln -s -f '{to}' Temp && mv 'Temp/{Path.GetFileName(to)}' '{from}'\"";
 #endif
 
             var p = new Process()

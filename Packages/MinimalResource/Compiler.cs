@@ -5,6 +5,7 @@ using System.Reflection;
 using System.Threading;
 using UnityEditor;
 using UnityEngine;
+using UnityEngine.Scripting;
 using Debug = UnityEngine.Debug;
 #if !UNITY_2021_2_OR_NEWER
 using System.Linq;
@@ -15,6 +16,10 @@ namespace Coffee.MinimalResource
     public static class Compiler
     {
         public const string k_ResourceDir = "Packages/com.coffee.minimal-resource/R~";
+        private static string s_CscPath;
+        private static string s_NetstandardPath;
+        private static string s_MscorlibPath;
+        private static bool s_Initialized;
 
         public static string GetBuiltinDotNetRuntimePath()
         {
@@ -39,43 +44,81 @@ namespace Coffee.MinimalResource
 #endif
         }
 
-        public static string GetBuiltinCscPath()
+        private static void Initialize()
         {
-            var cscPath = Path.Combine(EditorApplication.applicationContentsPath, "DotNetSdkRoslyn", "csc.dll");
-            if (File.Exists(cscPath)) return cscPath;
+            if (s_Initialized) return;
 
-            cscPath = Path.Combine(EditorApplication.applicationContentsPath, "Tools", "Roslyn", "csc.dll");
-            if (File.Exists(cscPath)) return cscPath;
-
-            throw new Exception("Builtin C# compiler (csc) not found.");
+            s_Initialized = true;
+            var contentsDir = EditorApplication.applicationContentsPath;
+            var resourcesDir = Path.Combine(contentsDir, "Resources");
+            s_CscPath = FindFile("csc.dll",
+                Path.Combine(contentsDir, "DotNetSdkRoslyn"),
+                Path.Combine(contentsDir, "Tools", "Roslyn"),
+                Path.Combine(resourcesDir, "Scripting", "DotNetSdk"),
+                resourcesDir,
+                contentsDir);
+            s_NetstandardPath = FindFile("netstandard.dll",
+                Path.Combine(contentsDir, "NetStandard"),
+                Path.Combine(resourcesDir, "Scripting", "NetStandard"),
+                resourcesDir);
+            s_MscorlibPath = FindFile("mscorlib.dll",
+                Path.Combine(contentsDir, "NetStandard"),
+                Path.Combine(resourcesDir, "Scripting", "NetStandard"),
+                resourcesDir);
         }
 
-        public static string FindFile(string filename, string dir)
+        private static string FindFile(string filename, params string[] dirs)
         {
-            foreach (var file in Directory.GetFiles(dir, filename, SearchOption.AllDirectories))
+#if UNITY_2021_2_OR_NEWER
+            var options = new EnumerationOptions() { RecurseSubdirectories = true, IgnoreInaccessible = true };
+#else
+            var options = SearchOption.AllDirectories;
+#endif
+            foreach (var dir in dirs)
             {
-                return file;
+                if (!Directory.Exists(dir)) continue;
+                foreach (var file in Directory.EnumerateFiles(dir, filename, options))
+                {
+                    return file;
+                }
             }
 
-            throw new Exception($"File not found: {filename}");
+            return null;
         }
 
-        public static string FindCoreLib()
+        public static string GetBuiltinCscPath()
         {
-            return FindFile("UnityEngine.CoreModule.dll",
-                Path.Combine(EditorApplication.applicationContentsPath, "Managed/UnityEngine"));
+            Initialize();
+            if (string.IsNullOrEmpty(s_CscPath)) throw new Exception("Builtin C# compiler (csc) not found.");
+
+            return s_CscPath;
+        }
+
+        public static string FindLibForAttr()
+        {
+            return typeof(AlwaysLinkAssemblyAttribute).Assembly.Location;
         }
 
         public static string FindStandardLib()
         {
-            return FindFile("netstandard.dll",
-                Path.Combine(EditorApplication.applicationContentsPath, "NetStandard"));
+            Initialize();
+            if (string.IsNullOrEmpty(s_NetstandardPath))
+            {
+                throw new Exception("Builtin 'netstandard.dll' not found.");
+            }
+
+            return s_NetstandardPath;
         }
 
         public static string FindMscorlib()
         {
-            return FindFile("mscorlib.dll",
-                Path.Combine(EditorApplication.applicationContentsPath, "NetStandard"));
+            Initialize();
+            if (string.IsNullOrEmpty(s_MscorlibPath))
+            {
+                throw new Exception("Builtin 'mscorlib.dll' not found.");
+            }
+
+            return s_MscorlibPath;
         }
 
         public static void Build(string outPath)
@@ -95,7 +138,7 @@ namespace Coffee.MinimalResource
             }
 
             ExecuteCommand(runtime,
-                $"{csc} @rsp -out:\"{Path.GetFullPath(outPath)}\" -r:\"{FindCoreLib()}\" -r:\"{FindStandardLib()}\" -r:\"{FindMscorlib()}\"",
+                $"{csc} @rsp -out:\"{Path.GetFullPath(outPath)}\" -r:\"{FindLibForAttr()}\" -r:\"{FindStandardLib()}\" -r:\"{FindMscorlib()}\"",
                 k_ResourceDir);
         }
 

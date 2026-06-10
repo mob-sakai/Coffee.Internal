@@ -34,9 +34,9 @@ internal class MinimalResourceTest
     }
 
     [Test]
-    public void FindCoreLib()
+    public void FindLibForAttr()
     {
-        var path = Compiler.FindCoreLib();
+        var path = Compiler.FindLibForAttr();
         Assert.IsNotNull(path);
 
         var exist = File.Exists(path);

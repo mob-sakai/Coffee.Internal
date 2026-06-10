@@ -44,9 +44,9 @@ namespace Coffee.OpenSesame
                 ExtractArchive(downloadPath, installPath);
                 Debug.Log($"Package '{packageId}' has been installed at {installPath}.");
             }
-            catch
+            catch (Exception e)
             {
-                throw new Exception($"Package '{packageId}' installation failed.");
+                throw new Exception($"Package '{packageId}' installation failed.\n{e.Message}");
             }
             finally
             {
@@ -111,32 +111,19 @@ namespace Coffee.OpenSesame
 
         private static string[] GetExtractArchiveCommand(string archivePath, string extractTo, RuntimePlatform platform)
         {
-            var contentsPath = EditorApplication.applicationContentsPath;
-            switch (platform)
+            // Use tar in macOS or Linux
+            if (platform != RuntimePlatform.WindowsEditor && archivePath.EndsWith("tar.gz"))
             {
-                case RuntimePlatform.WindowsEditor:
-                    Directory.CreateDirectory(Path.GetDirectoryName(extractTo));
-                    return new[]
-                    {
-                        Path.Combine(contentsPath, "Tools", "7z.exe"),
-                        $"x {archivePath} -o{extractTo}"
-                    };
-                case RuntimePlatform.OSXEditor:
-                case RuntimePlatform.LinuxEditor:
-                    if (archivePath.EndsWith("tar.gz"))
-                    {
-                        Directory.CreateDirectory(extractTo);
-                        return new[] { "tar", $"-pzxf {archivePath} -C {extractTo}" };
-                    }
-
-                    Directory.CreateDirectory(Path.GetDirectoryName(extractTo));
-                    return new[]
-                    {
-                        Path.Combine(contentsPath, "Tools", "7za"), $"x {archivePath} -o{extractTo}"
-                    };
-                default:
-                    throw new NotSupportedException($"{Application.platform} is not supported");
+                Directory.CreateDirectory(extractTo);
+                return new[] { "tar", $"-pzxf {archivePath} -C {extractTo}" };
             }
+
+            // Use Builtin 7z
+            Directory.CreateDirectory(Path.GetDirectoryName(extractTo));
+            return new[]
+            {
+                FindBuiltin7Z(platform), $"x {archivePath} -o{extractTo}"
+            };
         }
 
         /// <summary>
@@ -220,6 +207,31 @@ namespace Coffee.OpenSesame
             {
                 File.Delete(path);
             }
+        }
+
+        private static string FindBuiltin7Z(RuntimePlatform platform)
+        {
+            var filename = platform == RuntimePlatform.WindowsEditor ? "7z.exe" : "7za";
+            var dirs = new[]
+            {
+                Path.Combine(EditorApplication.applicationContentsPath, "Tools"),
+                Path.Combine(EditorApplication.applicationContentsPath, "Helpers")
+            };
+#if UNITY_2021_2_OR_NEWER
+            var options = new EnumerationOptions() { RecurseSubdirectories = true, IgnoreInaccessible = true };
+#else
+            var options = SearchOption.AllDirectories;
+#endif
+            foreach (var dir in dirs)
+            {
+                if (!Directory.Exists(dir)) continue;
+                foreach (var file in Directory.EnumerateFiles(dir, filename, options))
+                {
+                    return file;
+                }
+            }
+
+            throw new FileNotFoundException($"Builtin 7z app ({filename}) is not found.");
         }
     }
 }

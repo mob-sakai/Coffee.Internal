@@ -84,7 +84,6 @@ public class EventLogger : UIBehaviour
         Log(m_OnDirtyVertices, "OnDirtyVertices");
     }
 
-
     protected override void OnRectTransformDimensionsChange()
     {
         Log(m_OnRectTransformDimensionsChange, "OnRectTransformDimensionsChange");
@@ -122,6 +121,8 @@ public class EventLogger : UIBehaviour
         Debug.Log($"[EventDebugger: {Time.frameCount}] <color=orange>{name}</color> {eventName}", this);
 
         if (m_PauseOnLog)
+        {
             Debug.Break();
+        }
     }
 }
