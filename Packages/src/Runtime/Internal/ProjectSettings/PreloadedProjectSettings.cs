@@ -14,6 +14,14 @@ namespace Coffee.Internal
     public abstract class PreloadedProjectSettings : ScriptableObject
 #if UNITY_EDITOR
     {
+        [Tooltip("When enabled, this settings asset will be added to PlayerSettings.preloadedAssets in build.\n\n" +
+                 "When disable, you should load this settings via Resources, AssetBundles or " +
+                 "Addressables to use UIEffect.")]
+        [SerializeField]
+        private bool m_PreLoadSettingsInBuild = true;
+
+        protected static bool s_BuildingPlayer;
+
         private class Postprocessor : AssetPostprocessor
         {
             private static void OnPostprocessAllAssets(string[] _, string[] __, string[] ___, string[] ____)
@@ -22,12 +30,34 @@ namespace Coffee.Internal
             }
         }
 
-        private class PreprocessBuildWithReport : IPreprocessBuildWithReport
+        private class ExcludeFromBuild : IPreprocessBuildWithReport, IPostprocessBuildWithReport
         {
             int IOrderedCallback.callbackOrder => 0;
 
             void IPreprocessBuildWithReport.OnPreprocessBuild(BuildReport report)
             {
+                Initialize();
+                s_BuildingPlayer = true;
+
+                foreach (var t in TypeCache.GetTypesDerivedFrom(typeof(PreloadedProjectSettings<>)))
+                {
+                    var settings = GetDefaultSettings(t);
+                    if (!settings || settings.m_PreLoadSettingsInBuild) continue;
+
+                    PlayerSettings.SetPreloadedAssets(
+                        PlayerSettings.GetPreloadedAssets()
+                            .Where(x => x && x.GetType() != t)
+                            .ToArray());
+
+                    Debug.Log($"[PreloadedProjectSettings] Build started: removed '{settings.name}' " +
+                              $"({t.Name}) from PreloadedAssets. " +
+                              $"It will be restored after build completes.");
+                }
+            }
+
+            void IPostprocessBuildWithReport.OnPostprocessBuild(BuildReport report)
+            {
+                s_BuildingPlayer = false;
                 Initialize();
             }
         }
@@ -41,11 +71,11 @@ namespace Coffee.Internal
                 {
                     // When create a new instance, automatically set it as default settings.
                     defaultSettings = CreateInstance(t) as PreloadedProjectSettings;
-                    SetDefaultSettings(defaultSettings);
+                    if (!s_BuildingPlayer) SetDefaultSettings(defaultSettings);
                 }
                 else if (GetPreloadedSettings(t).Length != 1)
                 {
-                    SetDefaultSettings(defaultSettings);
+                    if (!s_BuildingPlayer) SetDefaultSettings(defaultSettings);
                 }
 
                 if (defaultSettings != null)
@@ -151,7 +181,7 @@ namespace Coffee.Internal
                     return s_Instance;
                 }
 
-                SetDefaultSettings(s_Instance);
+                if (!s_BuildingPlayer) SetDefaultSettings(s_Instance);
                 return s_Instance;
             }
         }
@@ -193,9 +223,12 @@ namespace Coffee.Internal
             }
 
             EditorApplication.playModeStateChanged += OnPlayModeStateChanged;
+#else
+            if (s_Instance && s_Instance != this)
+            {
+                Destroy(s_Instance);
+            }
 #endif
-
-            if (s_Instance != null) return;
             s_Instance = this as T;
         }
 
