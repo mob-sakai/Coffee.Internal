@@ -23,17 +23,14 @@ namespace Coffee.Internal
 
         protected static bool s_BuildingPlayer;
 
-        private class Postprocessor : AssetPostprocessor
+        private class EditorEvents : AssetPostprocessor, IPreprocessBuildWithReport, IPostprocessBuildWithReport
         {
+            int IOrderedCallback.callbackOrder => 0;
+
             private static void OnPostprocessAllAssets(string[] _, string[] __, string[] ___, string[] ____)
             {
                 Initialize();
             }
-        }
-
-        private class ExcludeFromBuild : IPreprocessBuildWithReport, IPostprocessBuildWithReport
-        {
-            int IOrderedCallback.callbackOrder => 0;
 
             void IPreprocessBuildWithReport.OnPreprocessBuild(BuildReport report)
             {
@@ -62,6 +59,21 @@ namespace Coffee.Internal
                 s_BuildingPlayer = false;
                 Initialize();
             }
+
+#if UNITY_2019_3_OR_NEWER
+            [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+            private static void OnDomainReload()
+            {
+                foreach (var t in TypeCache.GetTypesDerivedFrom(typeof(PreloadedProjectSettings<>)))
+                {
+                    var defaultSettings = GetDefaultSettings(t);
+                    if (defaultSettings != null)
+                    {
+                        defaultSettings.OnDomainReload();
+                    }
+                }
+            }
+#endif
         }
 
         private static void Initialize()
@@ -154,6 +166,10 @@ namespace Coffee.Internal
         protected virtual void OnInitialize()
         {
         }
+
+        protected virtual void OnDomainReload()
+        {
+        }
     }
 
     internal abstract class PreloadedProjectSettingsEditor : Editor
@@ -195,13 +211,6 @@ namespace Coffee.Internal
         private static T s_Instance;
 
 #if UNITY_EDITOR
-#if UNITY_2019_3_OR_NEWER
-        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
-        private static void OnDomainReload()
-        {
-            s_Instance = null;
-        }
-#endif
         private string _jsonText;
 
         public static bool hasInstance => s_Instance != null;
@@ -246,8 +255,13 @@ namespace Coffee.Internal
                     break;
             }
         }
+
+        protected override void OnDomainReload()
+        {
+            s_Instance = null;
+        }
 #else
-    public static T instance => s_Instance != null ? s_Instance : s_Instance = CreateInstance<T>();
+        public static T instance => s_Instance != null ? s_Instance : s_Instance = CreateInstance<T>();
 #endif
 
         /// <summary>
@@ -263,6 +277,7 @@ namespace Coffee.Internal
                 return;
             }
 
+            EditorApplication.playModeStateChanged -= OnPlayModeStateChanged;
             EditorApplication.playModeStateChanged += OnPlayModeStateChanged;
 #else
             if (s_Instance && s_Instance != this)

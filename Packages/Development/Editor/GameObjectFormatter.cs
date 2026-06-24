@@ -130,7 +130,7 @@ namespace Coffee.Development
         {
             Misc.FindObjectsOfType<GameObject>()
                 .ToList()
-                .ForEach(go => s_Formatters.FirstOrDefault(p => p.Invoke(go)));
+                .ForEach(go => Array.ForEach(s_Formatters, p => p.Invoke(go)));
         }
     }
 }

@@ -14,22 +14,66 @@ namespace Coffee.NanoMonitor.Internal
     public abstract class PreloadedProjectSettings : ScriptableObject
 #if UNITY_EDITOR
     {
-        private class Postprocessor : AssetPostprocessor
+        [Tooltip("When enabled, this settings asset will be added to PlayerSettings.preloadedAssets in build.\n\n" +
+                 "When disable, you should load this settings via Resources, AssetBundles or Addressables to use.")]
+        [SerializeField]
+        [Header("Advanced")]
+        [HideInInspector]
+        private bool m_PreLoadSettingsInBuild = true;
+
+        protected static bool s_BuildingPlayer;
+
+        private class EditorEvents : AssetPostprocessor, IPreprocessBuildWithReport, IPostprocessBuildWithReport
         {
+            int IOrderedCallback.callbackOrder => 0;
+
             private static void OnPostprocessAllAssets(string[] _, string[] __, string[] ___, string[] ____)
             {
                 Initialize();
             }
-        }
-
-        private class PreprocessBuildWithReport : IPreprocessBuildWithReport
-        {
-            int IOrderedCallback.callbackOrder => 0;
 
             void IPreprocessBuildWithReport.OnPreprocessBuild(BuildReport report)
             {
+                AssetDatabase.Refresh();
+                Initialize();
+                s_BuildingPlayer = true;
+
+                foreach (var t in TypeCache.GetTypesDerivedFrom(typeof(PreloadedProjectSettings<>)))
+                {
+                    var settings = GetDefaultSettings(t);
+                    if (!settings || settings.m_PreLoadSettingsInBuild) continue;
+
+                    PlayerSettings.SetPreloadedAssets(
+                        PlayerSettings.GetPreloadedAssets()
+                            .Where(x => x && x.GetType() != t)
+                            .ToArray());
+
+                    Debug.Log($"[PreloadedProjectSettings] Build started: removed '{settings.name}' " +
+                              $"({t.Name}) from PreloadedAssets. " +
+                              $"It will be restored after build completes.");
+                }
+            }
+
+            void IPostprocessBuildWithReport.OnPostprocessBuild(BuildReport report)
+            {
+                s_BuildingPlayer = false;
                 Initialize();
             }
+
+#if UNITY_2019_3_OR_NEWER
+            [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+            private static void OnDomainReload()
+            {
+                foreach (var t in TypeCache.GetTypesDerivedFrom(typeof(PreloadedProjectSettings<>)))
+                {
+                    var defaultSettings = GetDefaultSettings(t);
+                    if (defaultSettings != null)
+                    {
+                        defaultSettings.OnDomainReload();
+                    }
+                }
+            }
+#endif
         }
 
         private static void Initialize()
@@ -37,18 +81,21 @@ namespace Coffee.NanoMonitor.Internal
             foreach (var t in TypeCache.GetTypesDerivedFrom(typeof(PreloadedProjectSettings<>)))
             {
                 var defaultSettings = GetDefaultSettings(t);
-                if (!defaultSettings)
+                if (defaultSettings == null)
                 {
-                    // When create a new instance, automatically set it as default settings.
-                    defaultSettings = CreateInstance(t) as PreloadedProjectSettings;
-                    SetDefaultSettings(defaultSettings);
+                    if (!s_BuildingPlayer)
+                    {
+                        // When create a new instance, automatically set it as default settings.
+                        defaultSettings = CreateInstance(t) as PreloadedProjectSettings;
+                        SetDefaultSettings(defaultSettings);
+                    }
                 }
                 else if (GetPreloadedSettings(t).Length != 1)
                 {
-                    SetDefaultSettings(defaultSettings);
+                    if (!s_BuildingPlayer) SetDefaultSettings(defaultSettings);
                 }
 
-                if (defaultSettings)
+                if (defaultSettings != null)
                 {
                     defaultSettings.OnInitialize();
                 }
@@ -66,22 +113,22 @@ namespace Coffee.NanoMonitor.Internal
         private static Object[] GetPreloadedSettings(Type type)
         {
             return PlayerSettings.GetPreloadedAssets()
-                .Where(x => x && x.GetType() == type)
+                .Where(x => x != null && x.GetType() == type)
                 .ToArray();
         }
 
         protected static PreloadedProjectSettings GetDefaultSettings(Type type)
         {
             return GetPreloadedSettings(type).FirstOrDefault() as PreloadedProjectSettings
-                   ?? AssetDatabase.FindAssets($"t:{nameof(PreloadedProjectSettings)}")
+                   ?? AssetDatabase.FindAssets($"t:{type.Name}")
                        .Select(AssetDatabase.GUIDToAssetPath)
                        .Select(AssetDatabase.LoadAssetAtPath<PreloadedProjectSettings>)
-                       .FirstOrDefault(x => x && x.GetType() == type);
+                       .FirstOrDefault(x => x != null && x.GetType() == type);
         }
 
         protected static void SetDefaultSettings(PreloadedProjectSettings asset)
         {
-            if (!asset) return;
+            if (asset == null) return;
 
             var type = asset.GetType();
             if (string.IsNullOrEmpty(AssetDatabase.GetAssetPath(asset)))
@@ -103,7 +150,7 @@ namespace Coffee.NanoMonitor.Internal
             var preloadedAssets = PlayerSettings.GetPreloadedAssets();
             var projectSettings = GetPreloadedSettings(type);
             PlayerSettings.SetPreloadedAssets(preloadedAssets
-                .Where(x => x)
+                .Where(x => x != null)
                 .Except(projectSettings.Except(new[] { asset }))
                 .Append(asset)
                 .Distinct()
@@ -119,6 +166,39 @@ namespace Coffee.NanoMonitor.Internal
         protected virtual void OnInitialize()
         {
         }
+
+        protected virtual void OnDomainReload()
+        {
+        }
+    }
+
+    internal abstract class PreloadedProjectSettingsEditor : Editor
+    {
+        private SerializedProperty _preLoadSettingsInBuild;
+
+        protected virtual void OnEnable()
+        {
+            _preLoadSettingsInBuild = serializedObject.FindProperty("m_PreLoadSettingsInBuild");
+        }
+
+        protected void DrawPreLoadSettingsInBuild(string packageName)
+        {
+            EditorGUILayout.PropertyField(_preLoadSettingsInBuild);
+            if (!_preLoadSettingsInBuild.boolValue)
+            {
+                EditorGUILayout.BeginHorizontal();
+                EditorGUILayout.HelpBox(
+                    $"{target.GetType().Name} asset will not be built in.\n" +
+                    $"please load manually from Resources, AssetBundle, or Addressables before using {packageName}.",
+                    MessageType.Warning);
+                if (GUILayout.Button("Ping"))
+                {
+                    EditorGUIUtility.PingObject(target);
+                }
+
+                EditorGUILayout.EndHorizontal();
+            }
+        }
     }
 #else
     {
@@ -133,29 +213,33 @@ namespace Coffee.NanoMonitor.Internal
 #if UNITY_EDITOR
         private string _jsonText;
 
+        public static bool hasInstance => s_Instance != null;
+
         public static T instance
         {
             get
             {
-                if (s_Instance) return s_Instance;
+                if (s_Instance != null) return s_Instance;
 
                 s_Instance = GetDefaultSettings(typeof(T)) as T;
-                if (s_Instance) return s_Instance;
+                if (s_Instance != null) return s_Instance;
 
                 s_Instance = CreateInstance<T>();
-                if (!s_Instance)
+                if (s_Instance == null)
                 {
                     s_Instance = null;
                     return s_Instance;
                 }
 
-                SetDefaultSettings(s_Instance);
+                if (!s_BuildingPlayer) SetDefaultSettings(s_Instance);
                 return s_Instance;
             }
         }
 
         private void OnPlayModeStateChanged(PlayModeStateChange state)
         {
+            if (!this) return;
+
             switch (state)
             {
                 case PlayModeStateChange.ExitingEditMode:
@@ -171,8 +255,13 @@ namespace Coffee.NanoMonitor.Internal
                     break;
             }
         }
+
+        protected override void OnDomainReload()
+        {
+            s_Instance = null;
+        }
 #else
-        public static T instance => s_Instance ? s_Instance : s_Instance = CreateInstance<T>();
+        public static T instance => s_Instance != null ? s_Instance : s_Instance = CreateInstance<T>();
 #endif
 
         /// <summary>
@@ -181,17 +270,21 @@ namespace Coffee.NanoMonitor.Internal
         protected virtual void OnEnable()
         {
 #if UNITY_EDITOR
-            var isDefaultSettings = !s_Instance || s_Instance == this || GetDefaultSettings(typeof(T)) == this;
+            var isDefaultSettings = s_Instance == null || s_Instance == this || GetDefaultSettings(typeof(T)) == this;
             if (!isDefaultSettings)
             {
                 DestroyImmediate(this, true);
                 return;
             }
 
+            EditorApplication.playModeStateChanged -= OnPlayModeStateChanged;
             EditorApplication.playModeStateChanged += OnPlayModeStateChanged;
+#else
+            if (s_Instance && s_Instance != this)
+            {
+                Destroy(s_Instance);
+            }
 #endif
-
-            if (s_Instance) return;
             s_Instance = this as T;
         }
 
@@ -220,7 +313,7 @@ namespace Coffee.NanoMonitor.Internal
 
             public override void OnGUI(string searchContext)
             {
-                if (!_target)
+                if (_target == null)
                 {
                     if (_editor)
                     {
