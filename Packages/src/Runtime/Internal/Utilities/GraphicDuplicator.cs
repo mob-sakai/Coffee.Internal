@@ -18,7 +18,7 @@ namespace Coffee.Internal
             if (graphic is TextMeshProUGUI || graphic is TMP_SubMeshUI)
             {
                 var cr = graphic.canvasRenderer;
-                if (!cr || cr.materialCount == 0) return null;
+                if (cr == null || cr.materialCount == 0) return null;
 
                 return cr.GetMaterial(0).mainTexture;
             }
@@ -28,7 +28,7 @@ namespace Coffee.Internal
 
         public static void CopyMesh(VertexHelper src, Mesh dst)
         {
-            if (src == null || !dst) return;
+            if (src == null || dst == null) return;
 
             Profiler.BeginSample("(COF)[GraphicDuplicator] CopyMesh");
             dst.Clear(false);
@@ -40,7 +40,7 @@ namespace Coffee.Internal
 
         public static void CopyMesh(Mesh src, Mesh dst)
         {
-            if (!src || !dst) return;
+            if (src == null || dst == null) return;
 
             Profiler.BeginSample("(COF)[GraphicDuplicator] CopyMesh");
             src.CopyTo(dst);
