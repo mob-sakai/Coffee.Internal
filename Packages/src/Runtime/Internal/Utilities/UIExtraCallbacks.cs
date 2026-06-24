@@ -93,10 +93,6 @@ namespace Coffee.Internal
         {
             Canvas.willRenderCanvases -= OnAfterCanvasRebuild;
             s_IsInitializedAfterCanvasRebuild = false;
-            s_AfterCanvasRebuildAction.Clear();
-            s_LateAfterCanvasRebuildAction.Clear();
-            s_BeforeCanvasRebuildAction.Clear();
-            s_OnScreenSizeChangedAction.Clear();
             s_LastScreenSize = default;
         }
 
