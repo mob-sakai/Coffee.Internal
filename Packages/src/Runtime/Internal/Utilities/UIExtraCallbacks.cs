@@ -82,14 +82,22 @@ namespace Coffee.Internal
                 message: "InitializeAfterCanvasRebuild");
         }
 
-#if UNITY_EDITOR
+#if UNITY_EDITOR && UNITY_2019_3_OR_NEWER
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+#elif UNITY_EDITOR
         [InitializeOnLoadMethod]
-#endif
+#else
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
+#endif
         private static void InitializeOnLoad()
         {
             Canvas.willRenderCanvases -= OnAfterCanvasRebuild;
             s_IsInitializedAfterCanvasRebuild = false;
+            s_AfterCanvasRebuildAction.Clear();
+            s_LateAfterCanvasRebuildAction.Clear();
+            s_BeforeCanvasRebuildAction.Clear();
+            s_OnScreenSizeChangedAction.Clear();
+            s_LastScreenSize = default;
         }
 
         /// <summary>
