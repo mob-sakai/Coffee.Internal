@@ -10,9 +10,6 @@ using Debug = UnityEngine.Debug;
 #if !UNITY_2021_2_OR_NEWER
 using System.Linq;
 #endif
-#if UNITY_6000_7_OR_NEWER
-using UnityEngine.Private.Scripting;
-#endif
 
 namespace Coffee.MinimalResource
 {
@@ -151,9 +148,6 @@ namespace Coffee.MinimalResource
                 + $" -r:\"{FindLibForAlwaysLinkAssembly()}\""
                 + $" -r:\"{FindStandardLib()}\""
                 + $" -r:\"{FindMscorlib()}\""
-#if UNITY_6000_7_OR_NEWER
-                + " -d:PRIVATE_SCRIPTING"
-#endif
                 , k_ResourceDir);
         }
 

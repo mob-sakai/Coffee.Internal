@@ -1,9 +1,5 @@
-#if PRIVATE_SCRIPTING
-using UnityEngine.Private.Scripting;
-#endif
-using UnityEngine.Scripting;
-[assembly: Preserve]
-[assembly: AlwaysLinkAssembly]
+[assembly: UnityEngine.Scripting.Preserve]
+[assembly: UnityEngine.Scripting.AlwaysLinkAssembly]
 
 partial interface I25851843006f14186907b66589789599
 {
