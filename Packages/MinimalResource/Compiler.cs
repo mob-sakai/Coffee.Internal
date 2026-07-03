@@ -10,6 +10,9 @@ using Debug = UnityEngine.Debug;
 #if !UNITY_2021_2_OR_NEWER
 using System.Linq;
 #endif
+#if UNITY_6000_7_OR_NEWER
+using UnityEngine.Private.Scripting;
+#endif
 
 namespace Coffee.MinimalResource
 {
@@ -94,9 +97,14 @@ namespace Coffee.MinimalResource
             return s_CscPath;
         }
 
-        public static string FindLibForAttr()
+        public static string FindLibForAlwaysLinkAssembly()
         {
             return typeof(AlwaysLinkAssemblyAttribute).Assembly.Location;
+        }
+
+        public static string FindLibForPreserveAttribute()
+        {
+            return typeof(PreserveAttribute).Assembly.Location;
         }
 
         public static string FindStandardLib()
@@ -138,8 +146,15 @@ namespace Coffee.MinimalResource
             }
 
             ExecuteCommand(runtime,
-                $"{csc} @rsp -out:\"{Path.GetFullPath(outPath)}\" -r:\"{FindLibForAttr()}\" -r:\"{FindStandardLib()}\" -r:\"{FindMscorlib()}\"",
-                k_ResourceDir);
+                $"{csc} @rsp -out:\"{Path.GetFullPath(outPath)}\""
+                + $" -r:\"{FindLibForPreserveAttribute()}\""
+                + $" -r:\"{FindLibForAlwaysLinkAssembly()}\""
+                + $" -r:\"{FindStandardLib()}\""
+                + $" -r:\"{FindMscorlib()}\""
+#if UNITY_6000_7_OR_NEWER
+                + " -d:PRIVATE_SCRIPTING"
+#endif
+                , k_ResourceDir);
         }
 
         /// <summary>

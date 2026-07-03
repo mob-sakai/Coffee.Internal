@@ -34,9 +34,19 @@ internal class MinimalResourceTest
     }
 
     [Test]
-    public void FindLibForAttr()
+    public void FindLibForAlwaysLinkAssembly()
     {
-        var path = Compiler.FindLibForAttr();
+        var path = Compiler.FindLibForAlwaysLinkAssembly();
+        Assert.IsNotNull(path);
+
+        var exist = File.Exists(path);
+        Assert.IsTrue(exist);
+    }
+
+    [Test]
+    public void FindLibForPreserveAttribute()
+    {
+        var path = Compiler.FindLibForPreserveAttribute();
         Assert.IsNotNull(path);
 
         var exist = File.Exists(path);

@@ -163,23 +163,42 @@ namespace Coffee.SymbolicLinker
     {
         public override float GetPropertyHeight(SerializedProperty property, GUIContent label)
         {
-            return 18 * 3;
+            return (EditorGUIUtility.singleLineHeight + 2) * 4;
         }
 
         public override void OnGUI(Rect pos, SerializedProperty property, GUIContent label)
         {
+            var spFrom = property.FindPropertyRelative("m_From");
+            var spTo = property.FindPropertyRelative("m_To");
+            var spDefine = property.FindPropertyRelative("m_Define");
+
             var labelWidth = EditorGUIUtility.labelWidth;
             EditorGUIUtility.labelWidth = 60;
             EditorGUI.BeginProperty(pos, label, property);
-            var p = new Rect(pos.x, pos.y, pos.width, 16);
-            EditorGUI.PropertyField(p, property.FindPropertyRelative("m_From"));
+            var p = new Rect(pos.x, pos.y, pos.width, EditorGUIUtility.singleLineHeight);
+            EditorGUI.PropertyField(p, spFrom);
 
-            p.y += 18;
-            EditorGUI.PropertyField(p, property.FindPropertyRelative("m_To"));
+            p.y += p.height + 2;
+            EditorGUI.PropertyField(p, spTo);
 
-            p.y += 18;
-            EditorGUI.PropertyField(p, property.FindPropertyRelative("m_Define"));
+            p.y += p.height + 2;
+            EditorGUI.PropertyField(p, spDefine);
             EditorGUIUtility.labelWidth = labelWidth;
+
+            var from = spFrom.stringValue;
+            var to = spTo.stringValue;
+            var path = $"./{Path.GetDirectoryName(from)}/{to}";
+            if (0 < from.Length && 0 < to.Length && (Directory.Exists(path) || File.Exists(path)))
+            {
+                p.y += p.height + 2;
+                EditorGUI.LabelField(p, EditorGUIUtility.TrTextContent(path));
+            }
+            else
+            {
+                p.y += p.height + 2;
+                EditorGUI.LabelField(p, EditorGUIUtility.TrTextContent(path, "The symbolic path is invalid.",
+                    "console.warnicon.sml"));
+            }
         }
     }
 }
