@@ -15,10 +15,18 @@ env:
 on:
   workflow_dispatch:
     inputs:
+      unityVersions:
+        description: "Specify the Unity versions to test. (eg. [ \"2019.4.41f2\", \"2020.3.15f2\" ])"
+        required: false
+        default: ''
       usePeriodVersions:
         description: "Use the period versions (.0f1, .10f1, 20f1, ...)."
         required: false
         default: "true"
+      findOptions:
+        description: "Specify additional options for unity-changeset. (eg. --ignore-alpha --min 2019.4 ])"
+        required: false
+        default: ''
   push:
     branches:
       - develop
@@ -60,9 +68,18 @@ jobs:
         id: setup
         run: |
           echo "==== Target Unity Versions ===="
-          LATEST_VERSIONS=`npx -y unity-changeset@latest list --json --versions --all --latest-patch --min ${MINIMUM_VERSION}`
+
+          # Check if specific Unity versions are provided via inputs
+          if [ -n "${{ inputs.unityVersions }}" ]; then
+            echo "* Using specified Unity versions" | tee $GITHUB_OUTPUT
+            echo "unityVersions=${{ inputs.unityVersions }}" | tee $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          # Find the latest Unity versions if no specific versions are provided
+          LATEST_VERSIONS=`npx -y unity-changeset@latest list --json --versions --all --latest-patch --min ${MINIMUM_VERSION} ${{ inputs.findOptions }}`
           if [ "${{ inputs.usePeriodVersions }}" = "true" ]; then
-            ADDITIONAL_VERSIONS=`npx -y unity-changeset@latest list --json --versions --min ${MINIMUM_VERSION} --grep '0f'`
+            ADDITIONAL_VERSIONS=`npx -y unity-changeset@latest list --json --versions --ignore-alpha --min ${MINIMUM_VERSION} --grep '0f' ${{ inputs.findOptions }}`
           else
             ADDITIONAL_VERSIONS=[]
           fi
