@@ -16,15 +16,15 @@ on:
   workflow_dispatch:
     inputs:
       unityVersions:
-        description: "Specify the Unity versions to test. (eg. [ \"2019.4.41f2\", \"2020.3.15f2\" ])"
+        description: 'Specify the Unity versions to test. (eg. [ "2019.4.41f2", "2020.3.15f2" ])'
         required: false
         default: ''
       usePeriodVersions:
-        description: "Use the period versions (.0f1, .10f1, 20f1, ...)."
+        description: 'Use the period versions (.0f1, .10f1, 20f1, ...).'
         required: false
         default: "true"
       findOptions:
-        description: "Specify additional options for unity-changeset. (eg. --ignore-alpha --min 2019.4 ])"
+        description: 'Specify additional options for unity-changeset. (eg. --ignore-alpha --max 2020.3 )'
         required: false
         default: ''
   push:
@@ -72,7 +72,7 @@ jobs:
           # Check if specific Unity versions are provided via inputs
           if [ -n "${{ inputs.unityVersions }}" ]; then
             echo "* Using specified Unity versions" | tee $GITHUB_OUTPUT
-            echo "unityVersions=${{ inputs.unityVersions }}" | tee $GITHUB_OUTPUT
+            echo 'unityVersions=${{ inputs.unityVersions }}' | tee $GITHUB_OUTPUT
             exit 0
           fi
 
