@@ -81,11 +81,12 @@ jobs:
 
           # Formulate find options based on inputs and environment variables
           FIND_OPTIONS=""
-          [ -n "${{ env.IGNORE_ALPHA }}" ] && FIND_OPTIONS+=" --ignore-alpha"
-          [ -n "${{ env.IGNORE_BETA }}" ] && FIND_OPTIONS+=" --ignore-beta"
+          [ "${{ env.IGNORE_ALPHA }}" = "true" ] && FIND_OPTIONS+=" --ignore-alpha"
+          [ "${{ env.IGNORE_BETA }}" = "true" ] && FIND_OPTIONS+=" --ignore-beta"
           [ -n "${{ env.MINIMUM_VERSION }}" ] && FIND_OPTIONS+=" --min ${MINIMUM_VERSION}"
           [ -n "${{ env.MAXIMUM_VERSION }}" ] && FIND_OPTIONS+=" --max ${MAXIMUM_VERSION}"
           [ -n "${{ inputs.overrideFindOptions }}" ] && FIND_OPTIONS="${inputs.overrideFindOptions}"
+          echo "find options: $FIND_OPTIONS"
 
           # Find the latest Unity versions if no specific versions are provided
           LATEST_VERSIONS=`npx -y unity-changeset@latest list --json --versions --all --latest-patch $FIND_OPTIONS`
