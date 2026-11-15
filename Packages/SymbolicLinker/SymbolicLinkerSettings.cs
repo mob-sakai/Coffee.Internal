@@ -58,6 +58,12 @@ namespace Coffee.SymbolicLinker
             {
                 if (IsConditional(info.m_Define))
                 {
+                    var parent = Path.GetDirectoryName(info.m_From);
+                    if (!string.IsNullOrEmpty(parent) && !Directory.Exists(parent))
+                    {
+                        Directory.CreateDirectory(parent);
+                    }
+
                     if (!Directory.Exists(info.m_From))
                     {
                         CreateSymbolicLink(info.m_From, info.m_To);
@@ -173,16 +179,16 @@ namespace Coffee.SymbolicLinker
             var spDefine = property.FindPropertyRelative("m_Define");
 
             var labelWidth = EditorGUIUtility.labelWidth;
-            EditorGUIUtility.labelWidth = 60;
+            EditorGUIUtility.labelWidth = 120;
             EditorGUI.BeginProperty(pos, label, property);
             var p = new Rect(pos.x, pos.y, pos.width, EditorGUIUtility.singleLineHeight);
-            EditorGUI.PropertyField(p, spFrom);
+            EditorGUI.PropertyField(p, spFrom, EditorGUIUtility.TrTempContent("Symbolic Link"));
 
             p.y += p.height + 2;
-            EditorGUI.PropertyField(p, spTo);
+            EditorGUI.PropertyField(p, spTo, EditorGUIUtility.TrTempContent("Relative Path"));
 
             p.y += p.height + 2;
-            EditorGUI.PropertyField(p, spDefine);
+            EditorGUI.PropertyField(p, spDefine, EditorGUIUtility.TrTempContent("Define Constraints"));
             EditorGUIUtility.labelWidth = labelWidth;
 
             var from = spFrom.stringValue;
@@ -191,7 +197,16 @@ namespace Coffee.SymbolicLinker
             if (0 < from.Length && 0 < to.Length && (Directory.Exists(path) || File.Exists(path)))
             {
                 p.y += p.height + 2;
-                EditorGUI.LabelField(p, EditorGUIUtility.TrTextContent(path));
+                if (Directory.Exists(path))
+                {
+                    var info = new DirectoryInfo(path);
+                    EditorGUI.LabelField(p, EditorGUIUtility.TrTextContent(info.FullName));
+                }
+                else
+                {
+                    var info = new FileInfo(path);
+                    EditorGUI.LabelField(p, EditorGUIUtility.TrTextContent(info.FullName));
+                }
             }
             else
             {
