@@ -10,7 +10,7 @@ namespace Coffee.Development
 
         public void OnEnable()
         {
-            m_OnEnable.Invoke();
+            m_OnEnable?.Invoke();
         }
     }
 }

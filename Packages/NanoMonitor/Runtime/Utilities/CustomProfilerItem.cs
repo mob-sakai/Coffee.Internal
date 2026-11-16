@@ -73,17 +73,23 @@ namespace Coffee.NanoMonitor
 
         public CustomMonitorItem(string format, params (Type type, string member)[] props)
         {
-            m_Format = format;
-            m_Arg0 = 0 < props.Length ? new NumericProperty(props[0].type, props[0].member) : new NumericProperty();
-            m_Arg1 = 1 < props.Length ? new NumericProperty(props[1].type, props[1].member) : new NumericProperty();
-            m_Arg2 = 2 < props.Length ? new NumericProperty(props[2].type, props[2].member) : new NumericProperty();
+            m_Format = format ?? "";
+            m_Arg0 = props != null && 0 < props.Length
+                ? new NumericProperty(props[0].type, props[0].member)
+                : new NumericProperty();
+            m_Arg1 = props != null && 1 < props.Length
+                ? new NumericProperty(props[1].type, props[1].member)
+                : new NumericProperty();
+            m_Arg2 = props != null && 2 < props.Length
+                ? new NumericProperty(props[2].type, props[2].member)
+                : new NumericProperty();
         }
 
         public void UpdateText()
         {
             if (ui)
             {
-                ui.SetText(m_Format, m_Arg0.Get(), m_Arg1.Get(), m_Arg2.Get());
+                ui.SetText(m_Format, m_Arg0?.Get() ?? -1, m_Arg1?.Get() ?? -1, m_Arg2?.Get() ?? -1);
             }
         }
     }

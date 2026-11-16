@@ -128,14 +128,22 @@ namespace Coffee.Development
             // Get all icons available in EditorGUIUtility.IconContent().
             if (_allIcons == null)
             {
-                var bundle = typeof(EditorGUIUtility)
-                    .GetMethod("GetEditorAssetBundle", BindingFlags.Static | BindingFlags.NonPublic)
-                    .Invoke(null, null) as AssetBundle;
-                var assetNames = bundle.GetAllAssetNames();
-                _allIcons = Enumerable.Range(0, assetNames.Length)
-                    .Where(i => s_RegexIcon.IsMatch(assetNames[i]) && !s_RegexIgnoreIcon.IsMatch(assetNames[i]))
-                    .Select(i => (content: EditorGUIUtility.IconContent(assetNames[i]), name: assetNames[i]))
-                    .ToArray();
+                var method = typeof(EditorGUIUtility)
+                    .GetMethod("GetEditorAssetBundle", BindingFlags.Static | BindingFlags.NonPublic);
+                var bundle = method?.Invoke(null, null) as AssetBundle;
+                if (bundle == null)
+                {
+                    Debug.LogError("Could not retrieve the editor asset bundle.");
+                    _allIcons = Array.Empty<(GUIContent content, string name)>();
+                }
+                else
+                {
+                    var assetNames = bundle.GetAllAssetNames();
+                    _allIcons = Enumerable.Range(0, assetNames.Length)
+                        .Where(i => s_RegexIcon.IsMatch(assetNames[i]) && !s_RegexIgnoreIcon.IsMatch(assetNames[i]))
+                        .Select(i => (content: EditorGUIUtility.IconContent(assetNames[i]), name: assetNames[i]))
+                        .ToArray();
+                }
             }
 
             // Filter icons by search text.
@@ -212,7 +220,9 @@ namespace Coffee.Development
             foreach (var icon in _filteredIcons)
             {
                 // Display item in scroll view.
-                var displayHeight = Mathf.Clamp(icon.content.image.height, 20, 64);
+                var displayHeight = icon.content != null && icon.content.image
+                    ? Mathf.Clamp(icon.content.image.height, 20, 64)
+                    : 20;
                 if (_scrollViewPosition.y - 64 < y && y < _scrollViewPosition.y + Screen.height)
                 {
                     var r = GUILayoutUtility.GetRect(-1, displayHeight);

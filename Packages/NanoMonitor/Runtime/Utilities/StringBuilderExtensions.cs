@@ -24,6 +24,8 @@ namespace Coffee.NanoMonitor
         public static void AppendFormatNoAlloc(this StringBuilder sb, string format, double arg0 = 0, double arg1 = 0,
             double arg2 = 0, double arg3 = 0)
         {
+            if (sb == null || format == null) return;
+
             for (var i = 0; i < format.Length; i++)
             {
                 var c = format[i];

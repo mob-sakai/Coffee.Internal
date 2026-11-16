@@ -144,6 +144,7 @@ namespace Coffee.OpenSesame
                 RedirectStandardError = true,
                 RedirectStandardOutput = true
             });
+            if (p == null) throw new InvalidOperationException("Failed to start the process.");
 
             // Don't consume 100% of CPU while waiting for process to exit
             if (Application.platform == RuntimePlatform.OSXEditor)

@@ -54,8 +54,10 @@ namespace Coffee.SymbolicLinker
         [InitializeOnLoadMethod]
         private static void Apply()
         {
-            foreach (var info in instance.m_SymbolicLinks)
+            foreach (var info in instance.m_SymbolicLinks ?? Array.Empty<SymbolicLinkInfo>())
             {
+                if (info == null) continue;
+
                 if (IsConditional(info.m_Define))
                 {
                     var parent = Path.GetDirectoryName(info.m_From);
@@ -149,6 +151,8 @@ namespace Coffee.SymbolicLinker
                     // Draw settings.
                     instance.hideFlags &= ~HideFlags.NotEditable;
                     Editor.CreateCachedEditor(instance, null, ref s_Editor);
+                    if (s_Editor == null) return;
+
                     if (s_Editor.DrawDefaultInspector())
                     {
                         // If settings changed, save it.
@@ -177,6 +181,7 @@ namespace Coffee.SymbolicLinker
             var spFrom = property.FindPropertyRelative("m_From");
             var spTo = property.FindPropertyRelative("m_To");
             var spDefine = property.FindPropertyRelative("m_Define");
+            if (spFrom == null || spTo == null || spDefine == null) return;
 
             var labelWidth = EditorGUIUtility.labelWidth;
             EditorGUIUtility.labelWidth = 120;

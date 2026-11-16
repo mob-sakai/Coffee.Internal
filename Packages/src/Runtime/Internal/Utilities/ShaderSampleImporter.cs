@@ -24,7 +24,7 @@ namespace Coffee.Internal
 
         public static void RegisterShaderSamples((string shaderName, string sampleName, string version)[] samples)
         {
-            if (IsBatchOrBuilding()) return;
+            if (samples == null || IsBatchOrBuilding()) return;
 
             // Collect sample names.
             s_Samples = samples;
@@ -37,6 +37,8 @@ namespace Coffee.Internal
 
         public static void RegisterShaderAliases((string, string)[] aliases)
         {
+            if (aliases == null) return;
+
             foreach (var (from, to) in aliases)
             {
                 s_ShaderAliases[from] = to;
@@ -57,7 +59,7 @@ namespace Coffee.Internal
         /// </summary>
         public static bool ImportShaderIfSelected(string shaderName)
         {
-            if (IsBatchOrBuilding()) return false;
+            if (string.IsNullOrEmpty(shaderName) || IsBatchOrBuilding()) return false;
 
             if (s_ShaderAliases.TryGetValue(shaderName, out var alias))
             {
@@ -135,7 +137,8 @@ namespace Coffee.Internal
             var path = AssetDatabase.GetAssetPath(shader);
             if (string.IsNullOrEmpty(path)) return null;
 
-            return AssetImporter.GetAtPath(path).userData;
+            var importer = AssetImporter.GetAtPath(path);
+            return importer != null ? importer.userData : null;
         }
 
         private static void DeleteShader(string shaderName)

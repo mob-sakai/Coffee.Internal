@@ -139,6 +139,8 @@ namespace Coffee.NanoMonitor
 
         private static PropertyInfo GetPropertyInfo(string path)
         {
+            if (string.IsNullOrEmpty(path)) return null;
+
             var p = path.Split(';');
             if (p.Length != 2) return null;
 

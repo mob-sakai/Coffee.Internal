@@ -96,17 +96,21 @@ namespace Coffee.NanoMonitor
                 m_CustomUITemplate.gameObject.SetActive(false);
 
                 var parent = m_CustomUITemplate.transform.parent;
-                foreach (var item in _customMonitorItems)
+                foreach (var item in _customMonitorItems ?? Array.Empty<CustomMonitorItem>())
                 {
+                    if (item == null) continue;
+
                     item.ui = Instantiate(m_CustomUITemplate, parent);
+                    if (!item.ui) continue;
+
                     item.ui.name = "CustomMonitorUI";
                     item.ui.gameObject.SetActive(true);
                 }
             }
 
-            m_CloseButton.transform.localScale =
-                m_OpenButton.transform.localScale =
-                    top ? Vector3.one : new Vector3(1, -1, 1);
+            var buttonScale = top ? Vector3.one : new Vector3(1, -1, 1);
+            if (m_CloseButton) m_CloseButton.transform.localScale = buttonScale;
+            if (m_OpenButton) m_OpenButton.transform.localScale = buttonScale;
 
             var canMove = 1 < SceneManager.sceneCountInBuildSettings;
             if (m_PrevButton)
@@ -121,7 +125,7 @@ namespace Coffee.NanoMonitor
 
             SetVisibleOpenObject(_isOpened);
 
-            m_TargetFps.SetText("{0}", Application.targetFrameRate);
+            if (m_TargetFps) m_TargetFps.SetText("{0}", Application.targetFrameRate);
 
             Profiler.EndSample();
         }
@@ -160,9 +164,9 @@ namespace Coffee.NanoMonitor
                 m_UnityUsage.SetText("Unity:{0,7:N3}/{1,7:N3}MB", unityUsed, unityTotal);
             }
 
-            foreach (var item in _customMonitorItems)
+            foreach (var item in _customMonitorItems ?? Array.Empty<CustomMonitorItem>())
             {
-                item.UpdateText();
+                item?.UpdateText();
             }
 
             _frames = 0;
@@ -180,8 +184,8 @@ namespace Coffee.NanoMonitor
             _elapsed = _interval;
             _fpsElapsed = 0;
 
-            m_OpenedObject.SetActive(isOpen);
-            m_ClosedObject.SetActive(!isOpen);
+            if (m_OpenedObject) m_OpenedObject.SetActive(isOpen);
+            if (m_ClosedObject) m_ClosedObject.SetActive(!isOpen);
 
             Profiler.EndSample();
         }
@@ -230,12 +234,12 @@ namespace Coffee.NanoMonitor
             if (0 < Application.targetFrameRate)
             {
                 QualitySettings.vSyncCount = 0;
-                m_TargetFps.SetText("{0}", Application.targetFrameRate);
+                if (m_TargetFps) m_TargetFps.SetText("{0}", Application.targetFrameRate);
             }
             else
             {
                 QualitySettings.vSyncCount = 1;
-                m_TargetFps.SetText("vSy");
+                if (m_TargetFps) m_TargetFps.SetText("vSy");
             }
         }
 
@@ -261,7 +265,7 @@ namespace Coffee.NanoMonitor
 
         public void SetCustomItems(CustomMonitorItem[] customs)
         {
-            _customMonitorItems = customs;
+            _customMonitorItems = customs ?? Array.Empty<CustomMonitorItem>();
         }
     }
 }

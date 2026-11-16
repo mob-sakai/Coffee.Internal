@@ -27,6 +27,8 @@ namespace Coffee.MinimalResource
 
         private void StartCompileAll()
         {
+            if (m_OutputDllPaths == null) return;
+
             foreach (var outPath in m_OutputDllPaths)
             {
                 Compiler.Build(outPath);
@@ -43,6 +45,8 @@ namespace Coffee.MinimalResource
                     // Draw settings.
                     instance.hideFlags &= ~HideFlags.NotEditable;
                     Editor.CreateCachedEditor(instance, null, ref s_Editor);
+                    if (s_Editor == null) return;
+
                     if (s_Editor.DrawDefaultInspector())
                     {
                         // If settings changed, save it.

@@ -21,8 +21,9 @@ namespace Coffee.OpenSesame
         private void OnPreprocessAsset()
         {
             if (assetImporter is PluginImporter pluginImporter
-                && OpenSesameSettings.instance.m_AssemblyInfos
-                    .Any(x => x.m_DstAssemblyPath == assetImporter.assetPath))
+                && s_PiIsExplicitlyReferenced != null
+                && (OpenSesameSettings.instance.m_AssemblyInfos ?? Array.Empty<OpenSesameInfo>())
+                    .Any(x => x != null && x.m_DstAssemblyPath == assetImporter.assetPath))
             {
                 s_PiIsExplicitlyReferenced.SetValue(pluginImporter, true);
             }
@@ -53,8 +54,8 @@ namespace Coffee.OpenSesame
 
                 // Find the assembly info by the assembly name.
                 var assemblyName = Path.GetFileNameWithoutExtension(path);
-                var info = OpenSesameSettings.instance.m_AssemblyInfos
-                    .FirstOrDefault(x => x.GetAssemblyName() == assemblyName);
+                var info = (OpenSesameSettings.instance.m_AssemblyInfos ?? Array.Empty<OpenSesameInfo>())
+                    .FirstOrDefault(x => x != null && x.GetAssemblyName() == assemblyName);
 
                 // Start compile.
                 info?.StartCompile();
@@ -81,9 +82,9 @@ namespace Coffee.OpenSesame
 
         private void StartCompileAll()
         {
-            foreach (var info in m_AssemblyInfos)
+            foreach (var info in m_AssemblyInfos ?? Array.Empty<OpenSesameInfo>())
             {
-                info.StartCompile();
+                info?.StartCompile();
             }
         }
 
@@ -91,7 +92,8 @@ namespace Coffee.OpenSesame
         {
             if (!asmdef) return;
             var assemblyName = OpenSesameInfo.GetAssemblyName(asmdef);
-            var info = m_AssemblyInfos.FirstOrDefault(x => x.GetAssemblyName() == assemblyName);
+            var info = (m_AssemblyInfos ?? Array.Empty<OpenSesameInfo>())
+                .FirstOrDefault(x => x != null && x.GetAssemblyName() == assemblyName);
             info?.StartCompile();
         }
 
@@ -105,6 +107,8 @@ namespace Coffee.OpenSesame
                     // Draw settings.
                     instance.hideFlags &= ~HideFlags.NotEditable;
                     Editor.CreateCachedEditor(instance, null, ref s_Editor);
+                    if (s_Editor == null) return;
+
                     if (s_Editor.DrawDefaultInspector())
                     {
                         // If settings changed, save it.

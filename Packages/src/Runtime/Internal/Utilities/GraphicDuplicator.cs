@@ -14,13 +14,16 @@ namespace Coffee.Internal
     {
         public static Texture GetMainTexture(Graphic graphic)
         {
+            if (graphic == null) return null;
+
 #if TMP_ENABLE
             if (graphic is TextMeshProUGUI || graphic is TMP_SubMeshUI)
             {
                 var cr = graphic.canvasRenderer;
                 if (cr == null || cr.materialCount == 0) return null;
 
-                return cr.GetMaterial(0).mainTexture;
+                var material = cr.GetMaterial(0);
+                return material != null ? material.mainTexture : null;
             }
 #endif
             return graphic.mainTexture;

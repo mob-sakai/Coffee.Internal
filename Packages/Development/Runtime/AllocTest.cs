@@ -84,6 +84,8 @@ namespace Coffee.Development
 
         private void Update()
         {
+            if (m_Targets == null) return;
+
             foreach (var target in m_Targets)
             {
                 Update(target);
@@ -136,12 +138,16 @@ namespace Coffee.Development
 
         protected virtual void OnExecute(MonoBehaviour target)
         {
-            m_OnExecute.Invoke(target);
+            m_OnExecute?.Invoke(target);
         }
 
         public void CloneAndDestroy()
         {
+            if (!m_ClonePrefab) return;
+
             var clone = Instantiate(m_ClonePrefab, m_CloneInto ? m_CloneInto : transform);
+            if (!clone) return;
+
             clone.SetActive(true);
 
             // Destroy next frame

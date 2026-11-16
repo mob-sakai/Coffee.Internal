@@ -183,6 +183,8 @@ namespace Coffee.NanoMonitor.Internal
 
         protected void DrawPreLoadSettingsInBuild(string packageName)
         {
+            if (_preLoadSettingsInBuild == null) return;
+
             EditorGUILayout.PropertyField(_preLoadSettingsInBuild);
             if (!_preLoadSettingsInBuild.boolValue)
             {
@@ -322,8 +324,12 @@ namespace Coffee.NanoMonitor.Internal
                     }
 
                     _target = instance;
+                    if (_target == null) return;
+
                     _editor = Editor.CreateEditor(_target);
                 }
+
+                if (_editor == null) return;
 
                 _editor.OnInspectorGUI();
             }

@@ -19,6 +19,7 @@ namespace Coffee.Development
             go =>
             {
                 if (go.name != "TITLE") return false;
+                if (go.transform.parent == null) return false;
 
                 var label = GetLabel(go);
                 if (!string.IsNullOrEmpty(label))
