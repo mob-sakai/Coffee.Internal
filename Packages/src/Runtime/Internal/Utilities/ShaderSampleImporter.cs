@@ -74,6 +74,7 @@ namespace Coffee.Internal
                 {
                     message += "\n\nFor details, please see the readme.";
                 }
+
                 return ImportSampleIfSelected(sampleName, message);
             }
 
@@ -106,6 +107,7 @@ namespace Coffee.Internal
                         Application.OpenURL(s_ReadmeUrl);
                         return false;
                     }
+
                     if (selected != 0) return false;
                 }
                 else if (!EditorUtility.DisplayDialog($"Import {sampleName}", message, "Import", "Cancel"))
