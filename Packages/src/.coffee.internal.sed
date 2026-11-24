@@ -6,3 +6,4 @@ s/Coffee.UIMaterialPropertyInjectorInternal/Coffee.Internal/g
 s/Coffee.UIPostProcessingInternal/Coffee.Internal/g
 s/Coffee.UIEffectInternal/Coffee.Internal/g
 s/Coffee.UIDynamicSamplerInternal/Coffee.Internal/g
+s/Coffee.UICanvasFilterInternal/Coffee.Internal/g
